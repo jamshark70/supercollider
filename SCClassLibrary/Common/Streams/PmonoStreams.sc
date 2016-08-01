@@ -68,14 +68,7 @@ PmonoStream : Stream {
 				if(event.isRest.not) {
 					~type = \monoNote;
 					~instrument = pattern.synthName;
-					cleanup.addFunction(event, currentCleanupFunc = { | flag |
-						if (flag) { (id: id, server: server, type: \off,
-							hasGate: hasGate,
-							schedBundleArray: schedBundleArray,
-							schedBundle: schedBundle).play
-						};
-						currentCleanupFunc = nil;
-					});
+					cleanup.addFunction(event, currentCleanupFunc = this.makeCleanupFunc);
 				};
 			};
 			// this should happen whether or not ~id is nil
@@ -111,11 +104,23 @@ PmonoStream : Stream {
 			~msgFunc= msgFunc;
 		};
 	}
+
+	makeCleanupFunc {
+		^{ | flag |
+			if (flag) { (id: id, server: server, type: \off,
+				hasGate: hasGate,
+				schedBundleArray: schedBundleArray,
+				schedBundle: schedBundle).play
+			};
+			currentCleanupFunc = nil;
+		}
+	}
 }
 
 PmonoArticStream : PmonoStream {
+	var rearticulating = true;
 	embedInStream { |inevent|
-		var	sustain, rearticulating = true;
+		var	sustain;
 		inevent ?? { ^nil.yield };
 
 		this.prInit(inevent);
@@ -141,6 +146,18 @@ PmonoArticStream : PmonoStream {
 			} {
 				^cleanup.exit(inevent)
 			}
+		}
+	}
+
+	makeCleanupFunc {
+		^{ | flag |
+			if (flag) { (id: id, server: server, type: \off,
+				hasGate: hasGate,
+				schedBundleArray: schedBundleArray,
+				schedBundle: schedBundle).play
+			};
+			currentCleanupFunc = nil;
+			rearticulating = true;
 		}
 	}
 }
