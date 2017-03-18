@@ -163,7 +163,7 @@ Pfuncn : Pattern {
 	storeArgs { ^[func,repeats] }
 	embedInStream {  arg inval;
 		repeats.value(inval).do({
-			inval = func.value(inval).processRest(inval).yield;
+			inval = func.value(inval).yield;
 		});
 		^inval
 	}
@@ -350,10 +350,13 @@ Pbind : Pattern {
 						^inevent
 					};
 					name.do { arg key, i;
-						event.put(key, streamout[i].processRest(event));
+						var out = streamout[i];
+						event.put(key, out);
+						out.prescribeRest(event);
 					};
 				}{
 					event.put(name, streamout);
+					streamout.prescribeRest(event);
 				};
 
 			};
