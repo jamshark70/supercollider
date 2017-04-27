@@ -429,7 +429,7 @@ Pfindur : FilterPattern {
 			inevent = stream.next(event).asEvent ?? { ^event };
 			cleanup.update(inevent);
 			delta = inevent.delta;
-			nextElapsed = elapsed + delta;
+			nextElapsed = elapsed + delta.value;  // accumulators should unwrap Rests
 			if (nextElapsed.roundUp(tolerance) >= localdur) {
 				// must always copy an event before altering it.
 				// fix delta time and yield to play the event.
@@ -470,7 +470,7 @@ Psync : FilterPattern {
 			cleanup.update(inevent);
 
 			delta = inevent.delta;
-			nextElapsed = elapsed + delta;
+			nextElapsed = elapsed + delta.value;  // accumulators should unwrap Rests
 
 			if (localmaxdur.notNil and: { nextElapsed.round(tolerance) >= localmaxdur }) {
 				inevent = inevent.copy;
@@ -502,7 +502,7 @@ Pconst : FilterPattern {
 				inval = (localSum - elapsed).yield;
 				^inval
 			};
-			nextElapsed = elapsed + delta;
+			nextElapsed = elapsed + delta.value;  // accumulators should unwrap Rests
 			if (nextElapsed.round(tolerance) >= localSum) {
 				inval = (localSum - elapsed).yield;
 				^inval
