@@ -398,6 +398,7 @@ Pseries : Pattern {	// arithmetic series
 			if(stepVal.isNil) { ^inval };
 			outval = cur;
 			cur = cur + stepVal;
+			if(stepVal.isRest.not) { cur = cur.value };
 			counter = counter + 1;
 			inval = outval.yield;
 		};
@@ -422,6 +423,7 @@ Pgeom : Pattern {	// geometric series
 			if(growVal.isNil) { ^inval };
 			outval = cur;
 			cur = cur * growVal;
+			if(growVal.isRest.not) { cur = cur.value };
 			counter = counter + 1;
 			inval = outval.yield;
 		};
