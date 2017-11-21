@@ -99,35 +99,12 @@ ServerStatusWatcher {
 	}
 
 	doWhenBooted { |onComplete, limit = 100, onFailure|
-		var mBootNotifyFirst = bootNotifyFirst, postError = true;
-		bootNotifyFirst = false;
-
-		if (server.isReady) {
-			^forkIfNeeded({ onComplete.value(server) })
-		};
-
 		^Routine {
-			while {
-				this.isReady.not
-				and: { (limit = limit - 1) > 0 }
-			} {
-				0.2.wait;
-			};
-
-			if(this.isReady.not, {
-				if(onFailure.notNil) {
-					postError = (onFailure.value(server) == false);
-				};
-				if(postError) {
-					"Server '%' on failed to start. You may need to kill all servers".format(server.name).error;
-				};
-				serverBooting = false;
-				server.changed(\serverRunning);
-			}, {
-				server.sync;
-				onComplete.value;
-			});
-
+			server.setupCondition.wait;
+			// deleting failure case because we will never get here on failure.
+			// failure should be handled elsewhere... still thinking about it.
+			server.sync;  // do we really need this?
+			onComplete.value;
 		}.play(AppClock)
  	}
 

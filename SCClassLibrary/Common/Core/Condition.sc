@@ -37,6 +37,10 @@ Condition {
 			thread.clock.sched(0, thread);
 		});
 	}
+
+	clear {
+		waitingThreads = nil;
+	}
 }
 
 FlowVar {

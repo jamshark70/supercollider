@@ -281,7 +281,7 @@ Server {
 	var <window, <>scopeWindow, <emacsbuf;
 	var <volume, <recorder, <statusWatcher;
 	var <pid, serverInterface;
-	var <tempSetupItems;
+	var <setupCondition;
 
 	*initClass {
 		Class.initClassTree(ServerOptions);
@@ -337,7 +337,7 @@ Server {
 
 		// make statusWatcher before clientID, so .serverRunning works
 		statusWatcher = ServerStatusWatcher(server: this);
-		tempSetupItems = List[];
+		setupCondition = Condition { this.isReady };
 
 		// go thru setter to test validity
 		this.clientID = argClientID ? 0;
@@ -390,25 +390,6 @@ Server {
 		}, AppClock);
 	}
 
-	removeSetupItem { |item|
-		var index = tempSetupItems.indexOfEqual(item);
-		index !? { tempSetupItems.removeAt(index) }
-	}
-
-	addSetupItem { |item, doIfBooted = false|
-		if (Server.postingBootInfo) {
-			"% .% (%).\n".postf(this, thisMethod.name, item.cs);
-		};
-
-		this.removeSetupItem(item);
-		tempSetupItems.add(item);
-		if (doIfBooted) {
-			if (this.serverRunning) {
-				forkIfNeeded { item.value(this) }
-			}
-		}
-	}
-
 	prRunBootTask {
 		this.state_(\isSettingUp);
 
@@ -425,10 +406,8 @@ Server {
 			statusWatcher.serverRunning_(true);
 			this.changed(\serverRunning);
 
-			if (Server.postingBootInfo) { "prRun: % .%\n".postf(this, "tempSetupItems.do") };
-			while { tempSetupItems.notEmpty } {
-				tempSetupItems.removeAt(0).value;
-			};
+			if (Server.postingBootInfo) { "prRun: % .%\n".postf(this, "setupCondition.signal") };
+			setupCondition.signal;
 		}, AppClock);
 	}
 
