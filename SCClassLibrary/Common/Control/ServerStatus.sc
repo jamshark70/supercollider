@@ -14,7 +14,7 @@ ServerStatusWatcher {
 	var <avgCPU, <peakCPU;
 	var <sampleRate, <actualSampleRate;
 
-	var reallyDeadCount = 0, bootNotifyFirst = true;
+	var reallyDeadCount = 0;
 
 	*new { |server|
 		^super.newCopyArgs(server)
@@ -34,20 +34,23 @@ ServerStatusWatcher {
 	isBooting { ^state == \isBooting }
 	isReady { ^state == \isReady }
 	isSettingUp { ^state == \isSettingUp }
-	isQitting { ^state == \isQuitting }
+	isQuitting { ^state == \isQuitting }
+	isOff { ^state == \isOff }
 
 	quit { |onComplete, onFailure, watchShutDown = true|
-		if(watchShutDown) {
+		if(watchShutDown and: { this.isOff.not }) {
 			this.watchQuit(onComplete, onFailure)
 		} {
 			this.stopStatusWatcher;
 			onComplete.value;
+			this.state = \isOff;
 		};
 		this.stopAliveThread;
 		notified = false;
+
+		// do we still need these? aren't they replaced by 'state'?
 		serverBooting = false;
 		this.serverRunning = false;
-		bootNotifyFirst = true;
 	}
 
 	notify_ { |flag = true|
@@ -103,8 +106,12 @@ ServerStatusWatcher {
 			server.setupCondition.wait;
 			// deleting failure case because we will never get here on failure.
 			// failure should be handled elsewhere... still thinking about it.
-			server.sync;  // do we really need this?
-			onComplete.value;
+			if(this.isReady) {
+				server.sync;  // do we really need this?
+				onComplete.value;
+			} {
+				onFailure.value;
+			}
 		}.play(AppClock)
  	}
 

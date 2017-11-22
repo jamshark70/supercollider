@@ -754,16 +754,9 @@ Server {
 			"% .% onComplete: %\n".postf(this, thisMethod.name, onComplete);
 		};
 
-		if(this.serverRunning) {
-			^forkIfNeeded({ onComplete.value(this) }, AppClock)
+		if(this.isOff) {
+			this.boot(onFailure: true);
 		};
-
-		// onFailure.true: why is this necessary?
-		// this.boot also calls doWhenBooted.
-		// doWhenBooted prints the normal boot failure message.
-		// if the server fails to boot, the failure error gets posted TWICE.
-		// So, we suppress one of them.
-		this.boot(onFailure: true);
 		^this.doWhenBooted(onComplete, limit, onFailure);
 	}
 
@@ -1055,7 +1048,7 @@ Server {
 						ptIf.("unhang because app has booted");
 						cond.unhang;
 					}
-				})
+				}, { cond.unhang })  // on failure, just go forward to if(programRunning)
 			}, 0.25);
 
 			// pt.value("cond.hang for app boot...");
@@ -1073,6 +1066,12 @@ Server {
 					ptIf.("booted and notified, so unhang!");
 					cond2.unhang;
 				};
+			} {
+				// waitingThreads will check for server state == \isReady
+				// if false (as it will be in this branch), they will do their onFailure actions
+				setupCondition.unhang;
+				onFailure.value(this);
+				nil.alwaysYield  // we already know it failed -- we're done
 			};
 
 			pt.("cond2.hang for notification and clientID:");
@@ -1106,7 +1105,7 @@ Server {
 		this.connectSharedMemory;
 	}
 
-	bootServerApp { |onComplete|
+	bootServerApp { |onComplete, onFailure|
 		if(inProcess) {
 			"booting internal".postln;
 			this.bootInProcess;
@@ -1114,7 +1113,16 @@ Server {
 			forkIfNeeded { onComplete.value };
 		} {
 			this.disconnectSharedMemory;
-			pid = unixCmd(program ++ options.asOptionsString(addr.port), { statusWatcher.quit(watchShutDown:false) });
+			pid = unixCmd(program ++ options.asOptionsString(addr.port), {
+				// check for a failed server BOOT
+				// server failed to boot if server was in a non-ready state when the process quit
+				// if the server crashed after a successful boot, we do NOT run boot failure actions
+				if(this.isReady.not) {
+					onFailure.value;
+					setupCondition.unhang;  // as before, this triggers onFailure actions
+				};
+				statusWatcher.quit(watchShutDown:false)
+			});
 			("booting server '%' on address: %:%").format(this.name, addr.hostname, addr.port.asString).postln;
 			if(options.protocol == \tcp, { addr.tryConnectTCP(onComplete) }, onComplete);
 		}
