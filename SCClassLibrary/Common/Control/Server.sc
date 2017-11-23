@@ -1087,6 +1087,7 @@ Server {
 				onComplete.value(this);
 			} {
 				pt.("*** % boot - failed or timed out - do onFailure.".format(this));
+				setupCondition.unhang;
 				onFailure.value(this);
 			}
 
@@ -1113,15 +1114,18 @@ Server {
 			forkIfNeeded { onComplete.value };
 		} {
 			this.disconnectSharedMemory;
-			pid = unixCmd(program ++ options.asOptionsString(addr.port), {
-				// check for a failed server BOOT
-				// server failed to boot if server was in a non-ready state when the process quit
-				// if the server crashed after a successful boot, we do NOT run boot failure actions
-				if(this.isReady.not) {
-					onFailure.value;
-					setupCondition.unhang;  // as before, this triggers onFailure actions
+			pid = unixCmd(program ++ options.asOptionsString(addr.port), { |exitCode, quitPid|
+				// maybe a stray server process will quit after another boot attempt
+				if(quitPid == pid) {
+					// check for a failed server BOOT
+					// server failed to boot if server was in a non-ready state when the process quit
+					// if the server crashed after a successful boot, we do NOT run boot failure actions
+					if(this.isReady.not) {
+						onFailure.value;
+						setupCondition.unhang;  // as before, this triggers onFailure actions
+					};
+					statusWatcher.quit(watchShutDown:false);
 				};
-				statusWatcher.quit(watchShutDown:false)
 			});
 			("booting server '%' on address: %:%").format(this.name, addr.hostname, addr.port.asString).postln;
 			if(options.protocol == \tcp, { addr.tryConnectTCP(onComplete) }, onComplete);
