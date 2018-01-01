@@ -1,5 +1,6 @@
 UGen : AbstractFunction {
 	classvar <>buildSynthDef; // the synth currently under construction
+
 	var <>synthDef;
 	var <>inputs;
 	var <>rate = 'audio';
@@ -41,6 +42,7 @@ UGen : AbstractFunction {
 	init { arg ... theInputs;
 		// store the inputs as an array
 		inputs = theInputs;
+		this.canRemove = false;
 	}
 	copy {
 		// you can't really copy a UGen without disturbing the Synth.
@@ -506,7 +508,7 @@ UGen : AbstractFunction {
 	}
 
 	performDeadCodeElimination {
-		if (descendants.size == 0) {
+		if (this.canRemove and: { descendants.size == 0 }) {
 			this.inputs.do {|a|
 				if (a.isKindOf(UGen)) {
 					a.descendants.remove(this);
@@ -518,15 +520,35 @@ UGen : AbstractFunction {
 		};
 		^false
 	}
+
+	// spoof a constant "false" -- compare PureUGen
+	canRemove { ^false }
+	canRemove_ { |bool = false|
+		inputs.do { |ugen|
+			if(ugen.respondsTo(\canRemove_)) {
+				ugen.canRemove = bool;  // recursion up to the top of the chain, until inputs is empty
+			}
+		}
+	}
 }
 
 // ugen which has no side effect and can therefore be considered for a dead code elimination
 // read access to buffers/busses are allowed
 
 PureUGen : UGen {
-	optimizeGraph {
-		super.performDeadCodeElimination
+	var <canRemove = true;
+	canRemove_ { |bool = false|
+		canRemove = bool;
+		super.canRemove = bool;  // recursive scanning of inputs
 	}
+	init { arg ... theInputs;
+		// store the inputs as an array
+		inputs = theInputs;
+		// DO NOT set canRemove = false for PureUGens
+	}
+	// optimizeGraph {
+	// 	super.performDeadCodeElimination
+	// }
 }
 
 MultiOutUGen : UGen {

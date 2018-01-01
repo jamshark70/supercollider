@@ -474,8 +474,15 @@ SynthDef {
 		this.initTopoSort;
 
 		rewriteInProgress = true;
+		// first prune dead-end branches (pure ugens that never plug into any side effects)
 		children.copy.do { arg ugen;
-			ugen.optimizeGraph;
+			ugen.performDeadCodeElimination;
+		};
+		// THEN do math optimizations etc.
+		// if(ugen.notNil): Note that reindexing happens below.
+		// For now, just ignore 'children' slots that have been removed.
+		children.copy.do { arg ugen;
+			if(ugen.notNil) { ugen.optimizeGraph }
 		};
 		rewriteInProgress = nil;
 
