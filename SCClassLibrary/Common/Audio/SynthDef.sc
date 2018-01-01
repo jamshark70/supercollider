@@ -475,20 +475,32 @@ SynthDef {
 
 		rewriteInProgress = true;
 		// first prune dead-end branches (pure ugens that never plug into any side effects)
+		if(UGen.testing) {
+			children.debug("before performDeadCodeElimination");
+		};
 		children.copy.do { arg ugen;
 			ugen.performDeadCodeElimination;
 		};
 		// THEN do math optimizations etc.
 		// if(ugen.notNil): Note that reindexing happens below.
 		// For now, just ignore 'children' slots that have been removed.
+		if(UGen.testing) {
+			children.debug("before optimizeGraph");
+		};
 		children.copy.do { arg ugen;
 			if(ugen.notNil) { ugen.optimizeGraph }
 		};
 		rewriteInProgress = nil;
+		if(UGen.testing) {
+			children.debug("after optimizeGraph");
+		};
 
 		// fixup removed ugens
 		oldSize = children.size;
 		children.removeEvery(#[nil]);
+		if(UGen.testing) {
+			children.debug("reindexing");
+		};
 		if (oldSize != children.size) {
 			this.indexUGens
 		};
@@ -531,7 +543,7 @@ SynthDef {
 			outStack = available.pop.schedule(outStack);
 		};
 		children = outStack;
-		this.cleanupTopoSort;
+		// this.cleanupTopoSort;
 	}
 	indexUGens {
 		children.do { arg ugen, i;

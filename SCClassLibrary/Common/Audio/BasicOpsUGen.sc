@@ -1,6 +1,6 @@
 // These Unit Generators are instantiated by math operations on UGens
 
-BasicOpUGen : UGen {
+BasicOpUGen : PureUGen {
 	var <operator;
 
 //	writeName { arg file;
@@ -152,6 +152,12 @@ BinaryOpUGen : BasicOpUGen {
 		var a, b;
 		#a, b = inputs;
 
+		if(testing) {
+			[this.operator, a, b].debug("optimizeAddNeg");
+			[a.class.name, a.tryPerform(\operator), a.tryPerform(\descendants)].debug("a");
+			[b.class.name, b.tryPerform(\operator), b.tryPerform(\descendants)].debug("b");
+		};
+
 		if (b.isKindOf(UnaryOpUGen) and: { b.operator == 'neg' }) {
 			// a + b.neg -> a - b
 			if (b.descendants.size == 1) {
@@ -213,6 +219,16 @@ BinaryOpUGen : BasicOpUGen {
 		#a, b = inputs;
 		if(a.rate == \demand or: { b.rate == \demand }) { ^nil };
 
+		if(testing) {
+			[this.operator, this.inputs].debug("optimizeToSum3 checking");
+			if(a.isKindOf(BasicOpUGen)) {
+				[a, a.operator, a.inputs, a.descendants].debug("a");
+			};
+			if(b.isKindOf(BasicOpUGen)) {
+				[b, b.operator, b.inputs, b.descendants].debug("b");
+			};
+		};
+
 		if (a.isKindOf(BinaryOpUGen) and: { a.operator == '+'
 			and: { a.descendants.size == 1 }}) {
 			buildSynthDef.removeUGen(a);
@@ -247,6 +263,12 @@ BinaryOpUGen : BasicOpUGen {
 	optimizeSub {
 		var a, b, replacement;
 		#a, b = inputs;
+
+		if(testing) {
+			[this.operator, a, b].debug("optimizeSub");
+			[a.class.name, a.tryPerform(\operator), a.tryPerform(\descendants)].debug("a");
+			[b.class.name, b.tryPerform(\operator), b.tryPerform(\descendants)].debug("b");
+		};
 
 		if (b.isKindOf(UnaryOpUGen) and: { b.operator == 'neg' }) {
 			// a - b.neg -> a + b

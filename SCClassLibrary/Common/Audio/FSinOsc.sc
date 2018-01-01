@@ -127,7 +127,7 @@ Saw : UGen {
 	}
 }
 
-Pulse : UGen {
+Pulse : PureUGen {
 	*ar { arg freq=440.0, width = 0.5, mul = 1.0, add = 0.0;
 		^this.multiNew('audio', freq, width).madd(mul, add)
 	}

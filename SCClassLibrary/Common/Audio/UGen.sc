@@ -1,6 +1,8 @@
 UGen : AbstractFunction {
 	classvar <>buildSynthDef; // the synth currently under construction
 
+	classvar <>testing = false;
+
 	var <>synthDef;
 	var <>inputs;
 	var <>rate = 'audio';
