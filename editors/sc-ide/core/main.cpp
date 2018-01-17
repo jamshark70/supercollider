@@ -100,28 +100,30 @@ int main( int argc, char *argv[] )
     // been saved un-maximized.
     win->show();
 
-    QString startSessionName = settings->value("IDE/startWithSession").toString();
-    if (startSessionName == "last") {
-        QString lastSession = sessions->lastSession();
-        if (!lastSession.isEmpty()) {
-            sessions->openSession(lastSession);
-        }
-    }
-    else if (!startSessionName.isEmpty()) {
-        sessions->openSession(startSessionName);
-    }
+    QTimer::singleShot(0, main, SLOT(initWindow()));
 
-    if (!sessions->currentSession()) {
-        win->restoreWindowState();
-        sessions->newSession();
-    }
-
-    foreach (QString argument, arguments) {
-        main->documentManager()->open(argument);
-    }
-
-    win->restoreDocuments();
-
+//     QString startSessionName = settings->value("IDE/startWithSession").toString();
+//     if (startSessionName == "last") {
+//         QString lastSession = sessions->lastSession();
+//         if (!lastSession.isEmpty()) {
+//             sessions->openSession(lastSession);
+//         }
+//     }
+//     else if (!startSessionName.isEmpty()) {
+//         sessions->openSession(startSessionName);
+//     }
+// 
+//     if (!sessions->currentSession()) {
+//         win->restoreWindowState();
+//         sessions->newSession();
+//     }
+// 
+//     foreach (QString argument, arguments) {
+//         main->documentManager()->open(argument);
+//     }
+// 
+//     win->restoreDocuments();
+// 
     bool startInterpreter = settings->value("IDE/interpreter/autoStart").toBool();
     if (startInterpreter)
         main->scProcess()->startLanguage();
@@ -327,3 +329,28 @@ void Main::findReferences(const QString &string, QWidget * parent)
     dialog.exec();
 }
 
+void Main::initWindow()
+{
+    QString startSessionName = mSettings->value("IDE/startWithSession").toString();
+    if (startSessionName == "last") {
+        QString lastSession = mSessionManager->lastSession();
+        if (!lastSession.isEmpty()) {
+            mSessionManager->openSession(lastSession);
+        }
+    }
+    else if (!startSessionName.isEmpty()) {
+        mSessionManager->openSession(startSessionName);
+    }
+
+    if (!mSessionManager->currentSession()) {
+        MainWindow::instance()->restoreWindowState();
+        mSessionManager->newSession();
+    }
+
+//     foreach (QString argument, arguments) {
+//         main->documentManager()->open(argument);
+//     }
+// 
+     MainWindow::instance()->restoreDocuments();
+
+}

@@ -112,6 +112,8 @@ public Q_SLOTS:
 
     void quit();
 
+  void initWindow();
+
 Q_SIGNALS:
     void storeSettingsRequest(Settings::Manager *);
     void applySettingsRequest(Settings::Manager *);
