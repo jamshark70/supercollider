@@ -291,6 +291,7 @@ void Docklet::restoreDetachedState( const QByteArray & data )
 {
     if (!data.isEmpty()) {
         bool visible = data.at(0) == 1;
+	printf("Docklet::restoreDetachedState visible = %d\n", visible);
         setDetached( true );
         mWindow->restoreGeometry( data.mid(1) );
         mWindow->setVisible( visible );

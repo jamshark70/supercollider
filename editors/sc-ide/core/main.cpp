@@ -331,6 +331,7 @@ void Main::findReferences(const QString &string, QWidget * parent)
 
 void Main::initWindow()
 {
+  printf("Main::initWindow\n");
     QString startSessionName = mSettings->value("IDE/startWithSession").toString();
     if (startSessionName == "last") {
         QString lastSession = mSessionManager->lastSession();

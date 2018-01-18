@@ -102,7 +102,7 @@ HelpBrowser::HelpBrowser( QWidget * parent ):
     connect( scProcess, SIGNAL(classLibraryRecompiled()), mLoadProgressIndicator, SLOT(stop()) );
 
     createActions();
-
+    printf("help docklet calling applySettings\n");
     applySettings( Main::settings() );
 
     setFocusProxy(mWebView);
@@ -297,6 +297,7 @@ void HelpBrowser::sendRequest( const QString &code )
     }
 
     qDebug() << "sending request...";
+    printf("HelpBrowser::sendRequest\n");
     mLoadProgressIndicator->start(tr("Sending request"));
     Main::scProcess()->evaluateCode( code, true );
 }

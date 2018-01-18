@@ -1602,6 +1602,7 @@ void MainWindow::lookupDocumentationForCursor()
 
 void MainWindow::openHelp()
 {
+  printf("MainWindow::openHelp\n");
     if (mHelpBrowserDocklet->browser()->url().isEmpty())
         mHelpBrowserDocklet->browser()->goHome();
     mHelpBrowserDocklet->focus();
