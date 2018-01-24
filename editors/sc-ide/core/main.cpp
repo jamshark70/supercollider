@@ -89,6 +89,7 @@ int main( int argc, char *argv[] )
 
     Main * main = Main::instance();
 
+    printf("Making main window\n");
     MainWindow *win = new MainWindow(main);
 
     // NOTE: load session after GUI is created, so that GUI can respond
@@ -100,6 +101,7 @@ int main( int argc, char *argv[] )
     // been saved un-maximized.
     win->show();
 
+    printf("initWindow to timer\n");
     QTimer::singleShot(0, main, SLOT(initWindow()));
 
 //     QString startSessionName = settings->value("IDE/startWithSession").toString();

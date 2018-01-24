@@ -171,6 +171,7 @@ void HelpBrowser::applySettings( Settings::Manager *settings )
 
 void HelpBrowser::goHome()
 {
+  printf("HelpBrowser::goHome\n");
     static QString code( "HelpBrowser.goHome" );
     sendRequest(code);
 }

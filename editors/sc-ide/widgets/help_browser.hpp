@@ -166,6 +166,7 @@ public:
 
 private slots:
     void onInterpreterStart() {
+      printf("HelpBrowserDocklet onInterpreterStart(): isVisible() == %d\n", isVisible());
         if (isVisible() && mHelpBrowser->url().isEmpty())
             mHelpBrowser->goHome();
     }
