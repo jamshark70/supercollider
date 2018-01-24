@@ -1,4 +1,4 @@
-Tester : UnitTest {
+TestIndexUGenRates : UnitTest {
 
 	var server, numFrames, floats;
 
