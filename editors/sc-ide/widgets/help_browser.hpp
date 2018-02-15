@@ -33,10 +33,12 @@
 
 namespace ScIDE {
 
-namespace Settings { class Manager; }
-
+class Main;
+class Manager;
 class HelpBrowserDocklet;
 class HelpBrowserFindBox;
+
+namespace Settings { class Manager; }
 
 class LoadProgressIndicator : public QLabel
 {
@@ -167,20 +169,20 @@ public:
 private slots:
     void onInterpreterStart() {
       printf("HelpBrowserDocklet onInterpreterStart(): isVisible() == %d\n", isVisible());
-      Settings::Manager *settings = ScIDE::Main::settings();
-    settings->beginGroup("mainWindow");
-    QVariant varGeom = settings->value("geometry");
-    QVariant varState = settings->value("state");
-    QVariant varDetached = settings->value("detached");
-    settings->endGroup();
-    QVariantMap detachedData = varDetached.value<QVariantMap>();
-    // where to get the docklet instance?
-    QByteArray base64data = detachedData.value( /*docklet*/this->objectName() ).value<QByteArray>();
-    if(!base64data.isEmpty()) {
-      printf("visibility from settings = %d\n", base64data.at(0));
-    } else {
-      printf("base64data are empty\n");
-    };
+      Settings::Manager *settings = Main::instance()->settings();
+//      settings->beginGroup("mainWindow");
+//      QVariant varGeom = settings->value("geometry");
+//      QVariant varState = settings->value("state");
+//      QVariant varDetached = settings->value("detached");
+//      settings->endGroup();
+//      QVariantMap detachedData = varDetached.value<QVariantMap>();
+//      // where to get the docklet instance?
+//      QByteArray base64data = detachedData.value( /*docklet*/this->objectName() ).value<QByteArray>();
+//      if(!base64data.isEmpty()) {
+//        printf("visibility from settings = %d\n", base64data.at(0));
+//      } else {
+//        printf("base64data are empty\n");
+//      };
         if (isVisible() && mHelpBrowser->url().isEmpty())
             mHelpBrowser->goHome();
     }
