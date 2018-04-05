@@ -488,8 +488,8 @@ HelpBrowserDocklet::HelpBrowserDocklet( QWidget *parent ):
     printf("HelpBrowserDocklet onInterpreterStart(): isVisible() == %d\n", isVisible());
     Settings::Manager *settings = Main::instance()->settings();
     settings->beginGroup("mainWindow");
-    QVariant varGeom = settings->value("geometry");
-    QVariant varState = settings->value("state");
+    // QVariant varGeom = settings->value("geometry");
+    // QVariant varState = settings->value("state");
     QVariant varDetached = settings->value("detached");
     settings->endGroup();
     QVariantMap detachedData = varDetached.value<QVariantMap>();
