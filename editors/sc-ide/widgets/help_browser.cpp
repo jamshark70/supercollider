@@ -484,4 +484,38 @@ HelpBrowserDocklet::HelpBrowserDocklet( QWidget *parent ):
     connect( action, SIGNAL(triggered(bool)), mFindBox, SLOT(selectAll()) );
 }
 
+  void HelpBrowserDocklet::onInterpreterStart() {
+    printf("HelpBrowserDocklet onInterpreterStart(): isVisible() == %d\n", isVisible());
+    Settings::Manager *settings = Main::instance()->settings();
+    settings->beginGroup("mainWindow");
+    QVariant varGeom = settings->value("geometry");
+    QVariant varState = settings->value("state");
+    QVariant varDetached = settings->value("detached");
+    settings->endGroup();
+    QVariantMap detachedData = varDetached.value<QVariantMap>();
+    // where to get the docklet instance?
+    QByteArray base64data = detachedData.value( /*docklet*/this->objectName() ).value<QByteArray>();
+    bool visibility;
+    if(!base64data.isEmpty()) {
+      visibility = base64data.at(0);
+      printf("visibility from settings = %d\n", visibility);
+    } else {
+      printf("base64data are empty, assuming invisible\n");
+      visibility = false;
+    };
+    if (visibility) {
+      if (mHelpBrowser->url().isEmpty()) {
+	printf("visible and empty, calling goHome\n");
+	mHelpBrowser->goHome();
+      }	else {
+	  printf("visible, not empty, showing\n");
+	  this->setVisible(true);
+      }
+    } else {
+      printf("invisible, setVisible(false)\n");
+      this->setVisible(false);
+    }
+  }
+
+
 } // namespace ScIDE

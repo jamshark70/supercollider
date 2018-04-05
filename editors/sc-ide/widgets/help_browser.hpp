@@ -167,25 +167,7 @@ public:
     HelpBrowser *browser() { return mHelpBrowser; }
 
 private slots:
-    void onInterpreterStart() {
-      printf("HelpBrowserDocklet onInterpreterStart(): isVisible() == %d\n", isVisible());
-      Settings::Manager *settings = Main::instance()->settings();
-//      settings->beginGroup("mainWindow");
-//      QVariant varGeom = settings->value("geometry");
-//      QVariant varState = settings->value("state");
-//      QVariant varDetached = settings->value("detached");
-//      settings->endGroup();
-//      QVariantMap detachedData = varDetached.value<QVariantMap>();
-//      // where to get the docklet instance?
-//      QByteArray base64data = detachedData.value( /*docklet*/this->objectName() ).value<QByteArray>();
-//      if(!base64data.isEmpty()) {
-//        printf("visibility from settings = %d\n", base64data.at(0));
-//      } else {
-//        printf("base64data are empty\n");
-//      };
-        if (isVisible() && mHelpBrowser->url().isEmpty())
-            mHelpBrowser->goHome();
-    }
+  void onInterpreterStart();
 
 private:
     HelpBrowser *mHelpBrowser;
