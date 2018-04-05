@@ -494,6 +494,7 @@ HelpBrowserDocklet::HelpBrowserDocklet( QWidget *parent ):
     settings->endGroup();
     QVariantMap detachedData = varDetached.value<QVariantMap>();
     // where to get the docklet instance?
+  printf("onInterpreterStart this->objectName() = %s\n", this->objectName().toStdString().c_str());
     QByteArray base64data = detachedData.value( /*docklet*/this->objectName() ).value<QByteArray>();
     bool visibility;
     if(!base64data.isEmpty()) {

@@ -731,6 +731,7 @@ void MainWindow::saveWindowState()
 
 static void restoreDetachedState( Docklet *docklet,  const QVariantMap & data )
 {
+  printf("restoreDetachedState docklet->objectName() = %s\n", docklet->objectName().toStdString().c_str());
     QByteArray base64data = data.value( docklet->objectName() ).value<QByteArray>();
     docklet->restoreDetachedState( QByteArray::fromBase64( base64data ) );
 }
