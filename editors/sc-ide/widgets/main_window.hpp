@@ -195,6 +195,8 @@ private Q_SLOTS:
     void showAboutQT();
     void cmdLineForCursor();
 
+  void restoreDocksDetachedStates();
+  
 protected:
     virtual void closeEvent(QCloseEvent *event);
     virtual void dragEnterEvent( QDragEnterEvent * );

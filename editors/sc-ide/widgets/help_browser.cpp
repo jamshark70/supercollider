@@ -473,6 +473,7 @@ HelpBrowserDocklet::HelpBrowserDocklet( QWidget *parent ):
     connect( mFindBox, SIGNAL(query(QString, bool)),
              mHelpBrowser, SLOT(findText(QString, bool)) );
 
+    // original purpose: 'goHome()' if visible
     connect(Main::scProcess(), SIGNAL(started()), this, SLOT(onInterpreterStart()));
 
     OverridingAction * action;
@@ -485,7 +486,7 @@ HelpBrowserDocklet::HelpBrowserDocklet( QWidget *parent ):
 }
 
   void HelpBrowserDocklet::onInterpreterStart() {
-    QTimer::singleShot(2000, this, SLOT(finishRestore()));
+    QTimer::singleShot(3000, this, SLOT(finishRestore()));
   }
   
   void HelpBrowserDocklet::finishRestore() {
@@ -497,6 +498,7 @@ HelpBrowserDocklet::HelpBrowserDocklet( QWidget *parent ):
     QVariant varDetached = settings->value("detached");
     settings->endGroup();
     QVariantMap detachedData = varDetached.value<QVariantMap>();
+
     // where to get the docklet instance?
   printf("finishRestore this->objectName() = %s\n", this->objectName().toStdString().c_str());
     QByteArray base64data = detachedData.value( /*docklet*/this->objectName() ).value<QByteArray>();

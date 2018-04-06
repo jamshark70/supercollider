@@ -741,6 +741,8 @@ void MainWindow::restoreWindowState( T * settings )
 {
     qDebug("------------ restore window state ------------");
 
+    printf("MainWindow::restoreWindowState settings address = %p\n", settings);
+    
     settings->beginGroup("mainWindow");
     QVariant varGeom = settings->value("geometry");
     QVariant varState = settings->value("state");
@@ -751,6 +753,8 @@ void MainWindow::restoreWindowState( T * settings )
     QByteArray state = QByteArray::fromBase64( varState.value<QByteArray>() );
     QVariantMap detachedData = varDetached.value<QVariantMap>();
 
+    printf("detachedData address = %p\n", detachedData);
+
     if (!geom.isEmpty()) {
         // Workaround for Qt bug 4397:
         setWindowState(Qt::WindowNoState);
@@ -759,9 +763,10 @@ void MainWindow::restoreWindowState( T * settings )
     else
         setWindowState( windowState() & ~Qt::WindowFullScreen | Qt::WindowMaximized );
 
-    restoreDetachedState( mPostDocklet, detachedData );
-    restoreDetachedState( mDocumentsDocklet, detachedData );
-    restoreDetachedState( mHelpBrowserDocklet, detachedData );
+    QTimer::singleShot(0, this, SLOT(restoreDocksDetachedStates()));
+    // restoreDetachedState( mPostDocklet, detachedData );
+    // restoreDetachedState( mDocumentsDocklet, detachedData );
+    // restoreDetachedState( mHelpBrowserDocklet, detachedData );
 
     qDebug("restoring state");
 
@@ -780,6 +785,30 @@ void MainWindow::restoreWindowState( T * settings )
     qDebug("------------ END restore window state ------------");
 }
 
+  void MainWindow::restoreDocksDetachedStates()
+  {
+    // printf("MainWindow::restoreDocksDetachedStates\n");
+    
+    Settings::Manager *settings = Main::instance()->settings();
+    printf("MainWindow::restoreDocksDetachedStates settings address = %p\n", settings);
+
+    settings->beginGroup("mainWindow");
+    QVariant varGeom = settings->value("geometry");
+    QVariant varState = settings->value("state");
+    QVariant varDetached = settings->value("detached");
+    settings->endGroup();
+
+    QByteArray geom = QByteArray::fromBase64( varGeom.value<QByteArray>() );
+    QByteArray state = QByteArray::fromBase64( varState.value<QByteArray>() );
+    QVariantMap detachedData = varDetached.value<QVariantMap>();
+    printf("detachedData address = %p\n", detachedData);
+
+    restoreDetachedState( mPostDocklet, detachedData );
+    restoreDetachedState( mDocumentsDocklet, detachedData );
+    restoreDetachedState( mHelpBrowserDocklet, detachedData );
+
+  }
+  
 void MainWindow::restoreWindowState()
 {
     Settings::Manager *settings = Main::settings();
