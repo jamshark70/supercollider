@@ -485,7 +485,11 @@ HelpBrowserDocklet::HelpBrowserDocklet( QWidget *parent ):
 }
 
   void HelpBrowserDocklet::onInterpreterStart() {
-    printf("HelpBrowserDocklet onInterpreterStart(): isVisible() == %d\n", isVisible());
+    QTimer::singleShot(2000, this, SLOT(finishRestore()));
+  }
+  
+  void HelpBrowserDocklet::finishRestore() {
+    printf("HelpBrowserDocklet finishRestore(): isVisible() == %d\n", isVisible());
     Settings::Manager *settings = Main::instance()->settings();
     settings->beginGroup("mainWindow");
     // QVariant varGeom = settings->value("geometry");
@@ -494,7 +498,7 @@ HelpBrowserDocklet::HelpBrowserDocklet( QWidget *parent ):
     settings->endGroup();
     QVariantMap detachedData = varDetached.value<QVariantMap>();
     // where to get the docklet instance?
-  printf("onInterpreterStart this->objectName() = %s\n", this->objectName().toStdString().c_str());
+  printf("finishRestore this->objectName() = %s\n", this->objectName().toStdString().c_str());
     QByteArray base64data = detachedData.value( /*docklet*/this->objectName() ).value<QByteArray>();
     bool visibility;
     if(!base64data.isEmpty()) {

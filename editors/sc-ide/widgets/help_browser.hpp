@@ -168,6 +168,7 @@ public:
 
 private slots:
   void onInterpreterStart();
+  void finishRestore();
 
 private:
     HelpBrowser *mHelpBrowser;
