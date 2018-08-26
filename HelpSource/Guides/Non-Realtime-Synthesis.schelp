@@ -102,10 +102,28 @@ code::
 [2.0, x.releaseMsg]
 ::
 
-For link::Classes/SynthDef::, there is no 'addMsg' or 'recvMsg' method. The simplest form is:
+For link::Classes/SynthDef::, there is no 'addMsg' or 'recvMsg' method. Add SynthDefs into the Score as follows:
 
 code::
 [0.0, ['/d_recv', SynthDef(...).asBytes]]
+::
+
+Very large SynthDefs will need to be written to disk and emphasis::not:: rendered as OSC messages in the Score. The SuperCollider language client limits the size of a single OSC message to 65516 bytes. If a SynthDef exceeds this limit, creation of the Score object will fail with the error message teletype::ERROR: makeSynthMsgWithTags: buffer overflow::. Resolve this error message as follows:
+
+code::
+(
+SynthDef(\veryLarge, {
+	// ... very large UGen graph...
+}).writeDefFile;
+)
+
+(
+x = Score([
+	// Do NOT put a \d_recv message for \veryLarge here!
+	// Allow the NRT server to read it from the disk file.
+	...
+]);
+)
 ::
 
 subsection:: recordNRT
@@ -150,11 +168,26 @@ NOTE:: NRT processing continues until the last timestamp in the score file. If y
 
 If you are repeatedly rendering NRT scores, you can set code::Score.options = ServerOptions.new...:: and teletype::recordNRT:: will use this set of server options by default.
 
+subsection:: Score files
+teletype::recordNRT:: allows you optionally to specify the path to the binary OSC score file. This is useful if you want to keep the file for archival purposes, or to delete the file in teletype::recordNRT::'s action function.
+
+If you do not give a path, teletype::recordNRT:: will generate one for you in the system's temporary file location. These files are not automatically deleted after rendering. Some systems may automatically clean up old temporary files after some time. Otherwise, you can take it into your own hands:
+
+code::
+var oscPath = Platform.tmp +/+ "mytempscore";
+
+x = Score([ ... ]);
+
+x.recordNRT(oscFilePath: oscPath, ..., action: {
+	File.delete(oscPath)
+});
+::
+
 subsection:: Server instance
 
 If you want to use server abstraction objects (e.g. Synth, Group, Buffer), you might also want them to allocate node IDs or buffer and bus numbers for you. link::Classes/Synth#*basicNew:: and link::Classes/Buffer#*new:: use the server's allocators if you don't supply an ID (leave it nil). However, if you accidentally use the default server, any IDs you allocate for NRT will be marked as "used" in the default, real-time server. To avoid this, you can create a separate Server instance, just for producing the Score, and then remove the instance after rendering. This is a client-only object; you don't need to boot it.
 
-The Examples section demonstrates.
+NOTE:: It is technically incorrect to use the default server teletype::s:: for Score generation, but for quick and dirty uses, it may be acceptable. The examples in this document demonstrates the use of a dedicated Server object as a best practice. Following this best practice is likely to avoid problems in which NRT Score generation affect the default server instance; however, in common usage, such problems might not be severe. "At the user's own risk." ::
 
 subsection:: Server resources
 
@@ -311,14 +344,10 @@ Event patterns can be converted into Scores by teletype::asScore::.
 
 First, a simple example using the default SynthDef. This example does not require any extra resources.
 
+NOTE:: code::aPattern.asScore:: internally creates its own Server instance, so this example omits code::var server::. ::
+
 code::
 (
-var server = Server(\nrt,
-	options: ServerOptions.new
-	.numOutputBusChannels_(2)
-	.numInputBusChannels_(2)
-);
-
 x = Pbind(
 	\freq, Pexprand(200, 800, inf),
 	\dur, Pexprand(0.8, 1.25, inf) * Pgeom(0.01, 1.0143978590819, 400),
@@ -333,12 +362,12 @@ x.recordNRT(
 	options: server.options,
 	duration: 120
 );
-
-server.remove;
 )
 ::
 
 It is somewhat trickier to use Buffers and custom SynthDefs with pattern-generated Scores. It's possible to build the Score by teletype::asScore::, add setup instructions at time 0.0, and sort the commands in time order. But if the events also begin at time 0.0, sorting the score is not guaranteed to put the setup commands first. As a workaround, you can specify a short time offset in teletype::asScore::.
+
+See also link::Classes/Pproto:: for another way to allocate resources within a pattern itself, to be included automatically in teletype::asScore::. Not every type of resource can be allocated in this way, but it supports the common cases.
 
 code::
 (
