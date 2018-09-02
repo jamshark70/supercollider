@@ -113,7 +113,7 @@ public:
 			unsigned long frameCount, const PaStreamCallbackTimeInfo* timeInfo,
 			PaStreamCallbackFlags statusFlags );
 private:
-	void GetPaDeviceFromName(const char* device, int* mInOut);
+	void GetPaDeviceFromName(const char* device, int* mInOut, bool isInput);
 };
 
 SC_AudioDriver* SC_NewAudioDriver(struct World *inWorld)
@@ -293,17 +293,14 @@ int SC_PortAudioDriver::PortAudioCallback( const void *input, void *output,
 	return paContinue;
 }
 
-void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut) {
+void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, bool isInput) {
 
 	const PaDeviceInfo *pdi;
 	const PaHostApiInfo *apiInfo;
 	char devString[256];
 	PaDeviceIndex numDevices = Pa_GetDeviceCount();
-	mInOut[0] = paNoDevice;
-	mInOut[1] = paNoDevice;
+	*mInOut = paNoDevice;
 
-	// This tries to find one or two devices that match the given name (substring)
-	// might cause problems for some names...
 	for( int i=0; i<numDevices; i++ ) {
 		pdi = Pa_GetDeviceInfo( i );
 		apiInfo = Pa_GetHostApiInfo(pdi->hostApi);
@@ -311,8 +308,8 @@ void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut) {
 		strcat(devString, " : ");
 		strcat(devString, pdi->name);
 		if (strstr(devString, device)) {
-			if (pdi->maxInputChannels > 0) mInOut[0] = i;
-			if (pdi->maxOutputChannels > 0) mInOut[1] = i;
+			if (((pdi->maxInputChannels > 0) && isInput) || ((pdi->maxOutputChannels > 0) && !isInput))
+				*mInOut = i;
 		}
 	}
 }
@@ -341,9 +338,25 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate)
 	mDeviceInOut[0] = paNoDevice;
 	mDeviceInOut[1] = paNoDevice;
 	if (mWorld->hw->mInDeviceName)
-		GetPaDeviceFromName(mWorld->hw->mInDeviceName, mDeviceInOut);
+		GetPaDeviceFromName(mWorld->hw->mInDeviceName, &mDeviceInOut[0], true);
+	if (mWorld->hw->mOutDeviceName)
+		GetPaDeviceFromName(mWorld->hw->mOutDeviceName, &mDeviceInOut[1], false);
+
+	#ifdef _WIN32
+	//if one device is specified, let's try to open another one on matching api
+	if (mDeviceInOut[0] == paNoDevice && mDeviceInOut[1] != paNoDevice)
+		mDeviceInOut[0] = Pa_GetHostApiInfo(Pa_GetDeviceInfo(mDeviceInOut[1])->hostApi)->defaultInputDevice;
+	if (mDeviceInOut[0] != paNoDevice && mDeviceInOut[1] == paNoDevice)
+		mDeviceInOut[1] = Pa_GetHostApiInfo(Pa_GetDeviceInfo(mDeviceInOut[0])->hostApi)->defaultOutputDevice;
+	//in case that didn't work, use the default device (likely through MME api)
+	if (Pa_GetDeviceInfo(mDeviceInOut[0])->hostApi != Pa_GetDeviceInfo(mDeviceInOut[1])->hostApi || mDeviceInOut[0] == paNoDevice || mDeviceInOut[1] == paNoDevice) {
+		mDeviceInOut[0] = Pa_GetDefaultInputDevice();
+		mDeviceInOut[1] = Pa_GetDefaultOutputDevice();
+	}
+	#else
 	if (mDeviceInOut[0] == paNoDevice) mDeviceInOut[0] = Pa_GetDefaultInputDevice();
 	if (mDeviceInOut[1] == paNoDevice) mDeviceInOut[1] = Pa_GetDefaultOutputDevice();
+	#endif
 
 	*outNumSamples = mWorld->mBufLength;
 	if (mPreferredSampleRate)
