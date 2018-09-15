@@ -69,23 +69,23 @@ Note that when you specify a sound device through SuperCollider's code::ServerOp
 
 section:: Linux
 
-By default SuperCollider on Linux uses JACK and the audio device selection is managed by the JACK server. teletype::ServerOptions:: cannot override JACK's selection of audio hardware.
+By default SuperCollider on Linux uses JACK, and the audio device selection is managed by the JACK server. teletype::ServerOptions:: cannot override JACK's selection of audio hardware.
 
 subsection:: Setup with JACK server
-note::SuperCollider server is considered JACK emphasis::client::. In the following paragraph the term emphasis::client:: will refer to SuperCollider server, from the perspective of JACK. ::
+note::The SuperCollider server is considered a JACK emphasis::client::. In the following paragraph the term emphasis::client:: will refer to SuperCollider server, from the perspective of JACK. ::
 
 When the server is compiled for JACK natively, the code::ServerOption::'s teletype::device:: can be used in two ways:
 list::
-## to set client name to register with JACK
+## to set the client name to register with JACK:
 code::
 Server.default.options.device = "my_synth";
 ::
-## to use a specific JACK server, as well as set the client name
+## to use a specific JACK server, as well as set the client name:
 code::
 Server.default.options.device = "JACKServerName:scsynthName";
 ::
 ::
-Passing code::nil:: is equivalent to code::Server.default.options.device = "default:SuperCollider";::
+A code::nil:: device is equivalent to code::Server.default.options.device = "default:SuperCollider";::
 
 The JACK connections can be configured via the environment variables teletype::SC_JACK_DEFAULT_INPUTS:: and
 teletype::SC_JACK_DEFAULT_OUTPUTS::. The format is either a string that specifies another jack client or a comma-separated list of jack ports.
