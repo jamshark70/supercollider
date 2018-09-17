@@ -1,6 +1,7 @@
 Git {
 	var <>localPath, >url, tag, sha, remoteLatest, tags;
 	classvar gitIsInstalled;
+	classvar <>debug = false;
 
 	*isGit { |localPath|
 		^File.exists(localPath +/+ ".git")
@@ -124,7 +125,7 @@ Git {
 			result = res;
 		}, {
 			Git.checkForGit();
-		});
+		}, debug: debug);
 		^result;
 	}
 	*checkForGit {

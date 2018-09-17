@@ -194,8 +194,10 @@ Pipe : UnixFILE {
 		CmdPeriod.add(cancel);
 		^cancel
 	}
-	*callSync { arg command, onSuccess, onError, maxLineLength=4096;
+	*callSync { arg command, onSuccess, onError, maxLineLength=4096, debug = false;
 		var pipe, lines=[], line, close;
+		debug = (debug == true);  // ensure Boolean
+		if(debug) { "\nExecuting: %\n".postf(command) };
 		pipe = Pipe.new(command, "r");
 		close = {
 			if(pipe.isOpen, {
@@ -211,6 +213,7 @@ Pipe : UnixFILE {
 			// note: if process returns nothing at all
 			// but exits 0 it will still call onError.
 			// currently no way to get exit status
+			if(debug) { "Empty output, or command failed (error code not available)".postln };
 			onError.value();
 		}, {
 			while({ line.notNil }, {
@@ -218,6 +221,10 @@ Pipe : UnixFILE {
 				line = pipe.getLine(maxLineLength);
 			});
 			close.value();
+			if(debug) {
+				"Command output:".postln;
+				lines.do(_.postln);
+			};
 			onSuccess.value(lines.join(Char.nl));
 		});
 		^close
