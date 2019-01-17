@@ -26,21 +26,26 @@ Event : Environment {
 	// event types
 
 	*addEventType { arg type, func, parentEvent;
-		partialEvents.playerEvent.eventTypes.put(type, func);
-		this.addParentType(type, parentEvent)
+		EventType(type, func, parentEvent, defaultParentEvent)
 	}
 
 	*addParentType { arg type, parentEvent;
+		var eventType;
 		if(parentEvent.notNil and: { parentEvent.parent.isNil }) { parentEvent.parent = defaultParentEvent };
-		partialEvents.playerEvent.parentTypes.put(type, parentEvent)
+		eventType = EventType.at(type, defaultParentEvent);
+		if(eventType.notNil) {
+			eventType.parent = parentEvent;  // side effect...?
+		} {
+			Error("Attempted to addParentType for nonexistent type '%'".format(type)).throw;
+		}
 	}
 
 	*parentTypes {
-		^this.partialEvents.playerEvent.parentTypes
+		^EventType.parentTypesFor(defaultParentEvent)
 	}
 
 	*eventTypes {
-		^this.partialEvents.playerEvent.eventTypes
+		^EventType.functionsFor(defaultParentEvent)
 	}
 
 	// instance methods
@@ -144,9 +149,14 @@ Event : Environment {
 	}
 
 	*initClass {
+		Class.initClassTree(EventType);
 		Class.initClassTree(Server);
 		Class.initClassTree(TempoClock);
 		this.makeParentEvents;
+
+		partialEvents[\playerEvent][\eventTypes].keysValuesDo { |type, func|
+			EventType(type, func, nil, defaultParentEvent);
+		};
 
 		StartUp.add {
 			Event.makeDefaultSynthDef;
@@ -430,22 +440,20 @@ Event : Environment {
 				type: \note,
 
 				play: #{
-					var tempo, server, eventTypes, parentType;
+					var tempo, server, eventType;  // s, parentType;
 
-					parentType = ~parentTypes[~type];
-					parentType !? { currentEnvironment.parent = parentType };
+					eventType = EventType.at(~type ?? { \note }, currentEnvironment.parent);
 
 					server = ~server = ~server ? Server.default;
-
 					~finish.value(currentEnvironment);
-
 					tempo = ~tempo;
 					tempo !? { thisThread.clock.tempo = tempo };
 
-
-					if(currentEnvironment.isRest.not) {
-						eventTypes = ~eventTypes;
-						(eventTypes[~type] ?? { eventTypes[\note] }).value(server)
+					if(eventType.notNil) {
+						eventType.parent !? { currentEnvironment.parent = eventType.parent };
+						if(currentEnvironment.isRest.not) {
+							eventType.func.value(server)
+						};
 					};
 
 					~callback.value(currentEnvironment);
