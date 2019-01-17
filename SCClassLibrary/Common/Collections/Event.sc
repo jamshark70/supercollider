@@ -32,11 +32,11 @@ Event : Environment {
 
 	*addParentType { arg type, parentEvent;
 		if(parentEvent.notNil and: { parentEvent.parent.isNil }) { parentEvent.parent = defaultParentEvent };
-		partialEvents.playerEvent.parentTypes.put(type, parentEvent)
+		parentEvents[\eventTypeParents].put(type, parentEvent);
 	}
 
 	*parentTypes {
-		^this.partialEvents.playerEvent.parentTypes
+		^parentEvents[\eventTypeParents]
 	}
 
 	*eventTypes {
@@ -432,7 +432,9 @@ Event : Environment {
 				play: #{
 					var tempo, server, eventTypes, parentType;
 
-					parentType = ~parentTypes[~type];
+					// previously used ~parentTypes, but
+					// better to program to the class interface, not the implementation
+					parentType = currentEnvironment.class.parentTypes[~type];
 					parentType !? { currentEnvironment.parent = parentType };
 
 					server = ~server = ~server ? Server.default;
@@ -488,8 +490,6 @@ Event : Environment {
 
 
 				// the event types
-
-				parentTypes: (),
 
 				eventTypes: (
 
@@ -1051,7 +1051,9 @@ Event : Environment {
 				},
 				defaultMsgFunc: #{|freq = 440, amp = 0.1, pan = 0, out = 0|
 					[\freq, freq, \amp, amp, \pan, pan, \out, out] }
-			).putAll(partialEvents.nodeEvent)
+			).putAll(partialEvents.nodeEvent),
+
+			eventTypeParents: ()
 
 		);
 
