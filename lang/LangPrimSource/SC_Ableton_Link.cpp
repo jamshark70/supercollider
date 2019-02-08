@@ -192,7 +192,7 @@ int prLinkClock_SetQuantum(struct VMGlobals *g, int numArgsPushed)
 
 	double quantum;
 	int err = slotDoubleVal(b, &quantum);
-	if(err) return errFailed;
+	if(err) return errWrongType;
 
 	clock->SetQuantum(quantum);
 
