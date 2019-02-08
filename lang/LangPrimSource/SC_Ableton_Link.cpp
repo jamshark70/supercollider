@@ -40,22 +40,25 @@ public:
 	double BeatsToSecs(double beats) const
 	{
 		auto timeline = mLink.captureAppTimeline();
-		double secs = linkToHrTime(timeline.timeAtBeat(beats, mQuantum));
+		double secs = linkToHrTime(timeline.timeAtBeat(beats, mQuantum)) - mLatency;
 		return secs;
 	}
 	double SecsToBeats(double secs) const
 	{
 		auto timeline = mLink.captureAppTimeline();
-		double beats = timeline.beatAtTime(hrToLinkTime(secs), mQuantum);
+		double beats = timeline.beatAtTime(hrToLinkTime(secs + mLatency), mQuantum);
 		return beats;
 	}
 
 	void SetQuantum(double quantum);
+        double GetLatency();
+        void SetLatency(double latency);
 	std::size_t NumPeers() const { return mLink.numPeers(); }
 
 private:
 	ableton::Link mLink;
 	double mQuantum;
+	double mLatency;
 };
 
 LinkClock::LinkClock(VMGlobals *inVMGlobals, PyrObject* inTempoClockObj,
@@ -66,6 +69,7 @@ LinkClock::LinkClock(VMGlobals *inVMGlobals, PyrObject* inTempoClockObj,
 	//quantum = beatsPerBar
 	int err = slotDoubleVal(&inTempoClockObj->slots[2], &mQuantum);
 	if(err) throw err;
+	mLatency = 0.;  // default, user should override
 
 	mLink.enable(true);
 	mLink.setTempoCallback([this](double bpm) {
@@ -148,6 +152,16 @@ void LinkClock::SetQuantum(double quantum)
 	mCondition.notify_one();
 }
 
+double LinkClock::GetLatency()
+{
+  return mLatency;
+}
+
+void LinkClock::SetLatency(double latency)
+{
+  mLatency = latency;
+}
+
 //Primitives
 int prLinkClock_NumPeers(struct VMGlobals *g, int numArgsPushed);
 int prLinkClock_NumPeers(struct VMGlobals *g, int numArgsPushed)
@@ -185,6 +199,41 @@ int prLinkClock_SetQuantum(struct VMGlobals *g, int numArgsPushed)
 	return errNone;
 }
 
+int prLinkClock_GetLatency(struct VMGlobals *g, int numArgsPushed);
+int prLinkClock_GetLatency(struct VMGlobals *g, int numArgsPushed)
+{
+	PyrSlot *a = g->sp;
+	LinkClock *clock = (LinkClock*)slotRawPtr(&slotRawObject(a)->slots[1]);
+	if (!clock) {
+		error("clock is not running.\n");
+		return errFailed;
+	}
+
+	double latency = clock->GetLatency();
+	SetFloat(g->sp, latency);
+	return errNone;
+}
+
+int prLinkClock_SetLatency(struct VMGlobals *g, int numArgsPushed);
+int prLinkClock_SetLatency(struct VMGlobals *g, int numArgsPushed)
+{
+	PyrSlot *a = g->sp - 1;
+	PyrSlot *b = g->sp;
+	LinkClock *clock = (LinkClock*)slotRawPtr(&slotRawObject(a)->slots[1]);
+	if (!clock) {
+		error("clock is not running.\n");
+		return errFailed;
+	}
+
+	double latency;
+	int err = slotDoubleVal(b, &latency);
+	if(err) return errWrongType;
+
+	clock->SetLatency(latency);
+
+	return errNone;
+}
+
 void initLinkPrimitives()
 {
 	int base, index=0;
@@ -198,6 +247,9 @@ void initLinkPrimitives()
 	definePrimitive(base, index++, "_LinkClock_SetAll", prClock_SetAll<LinkClock>, 4, 0);
 	definePrimitive(base, index++, "_LinkClock_NumPeers", prLinkClock_NumPeers, 1, 0);
 	definePrimitive(base, index++, "_LinkClock_SetQuantum", prLinkClock_SetQuantum, 2, 0);
+	definePrimitive(base, index++, "_LinkClock_GetLatency", prLinkClock_GetLatency, 1, 0);
+	definePrimitive(base, index++, "_LinkClock_SetLatency", prLinkClock_SetLatency, 2, 0);
+
 }
 
 #endif
