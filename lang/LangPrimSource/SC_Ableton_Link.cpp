@@ -133,6 +133,7 @@ void LinkClock::SetTempoAtBeat(double inTempo, double inBeats)
 	mBeatDur = 1. / inTempo;
 
 	mLink.commitAppTimeline(timeline);
+	mCondition.notify_one();
 }
 
 void LinkClock::SetTempoAtTime(double inTempo, double inSeconds)
@@ -144,6 +145,7 @@ void LinkClock::SetTempoAtTime(double inTempo, double inSeconds)
 	mBeatDur = 1. / inTempo;
 
 	mLink.commitAppTimeline(timeline);
+	mCondition.notify_one();
 }
 
 void LinkClock::SetQuantum(double quantum)
