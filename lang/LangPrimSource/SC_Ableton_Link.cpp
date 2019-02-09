@@ -78,7 +78,6 @@ LinkClock::LinkClock(VMGlobals *inVMGlobals, PyrObject* inTempoClockObj,
 
 		auto timeline = mLink.captureAppTimeline();
 		double beats = timeline.beatAtTime(hrToLinkTime(secs), mQuantum);
-		mLink.commitAppTimeline(timeline);
 
 		mTempo = tempo;
 		mBeatDur = 1. / tempo;
