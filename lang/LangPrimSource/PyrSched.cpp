@@ -782,6 +782,8 @@ void* TempoClock::Run()
 	using namespace std::chrono;
 	//printf("->TempoClock::Run\n");
 	unique_lock<timed_mutex> lock(gLangMutex);
+	double lastSeconds = 0.;
+	double lastBeats = 0.;
 
 	while (mRun) {
 		assert(mQueue->size);
@@ -834,7 +836,10 @@ void* TempoClock::Run()
 
 			slotCopy((++g->sp), &task);
 			SetFloat(++g->sp, mBeats);
-			SetFloat(++g->sp, BeatsToSecs(mBeats));
+			double taskSeconds = BeatsToSecs(mBeats);
+			double schedSeconds = taskSeconds >= lastSeconds ? taskSeconds
+			  : lastSeconds + ((mBeats - lastBeats) * mBeatDur);
+			SetFloat(++g->sp, schedSeconds);
 			++g->sp;	SetObject(g->sp, mTempoClockObj);
 
 			runAwakeMessage(g);
@@ -844,6 +849,8 @@ void* TempoClock::Run()
 				double beats = mBeats + delta;
 				Add(beats, &task);
 			}
+			lastBeats = mBeats;
+			lastSeconds = schedSeconds;
 		}
 	}
 leave:
