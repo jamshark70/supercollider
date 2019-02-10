@@ -70,6 +70,7 @@ LinkClock : TempoClock {
 
 	// run tempo changed callback
 	prTempoChanged { |tempo, beats, secs, clock|
+		this.changed(\tempo);
 		tempoChanged.value(tempo, beats, secs, clock);
 	}
 
