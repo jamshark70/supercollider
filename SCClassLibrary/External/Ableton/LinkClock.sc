@@ -3,6 +3,7 @@
 LinkClock : TempoClock {
 
 	var <>tempoChanged;
+	var <>onStart, <>onStop;
 
 	*newFromTempoClock { |clock|
 		^super.new(
@@ -72,6 +73,14 @@ LinkClock : TempoClock {
 	prTempoChanged { |tempo, beats, secs, clock|
 		this.changed(\tempo);
 		tempoChanged.value(tempo, beats, secs, clock);
+	}
+
+	prStartStopSync { |isPlaying|
+		if(isPlaying) {
+			onStart.value
+		} {
+			onStop.value
+		}
 	}
 
 	latency {
