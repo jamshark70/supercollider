@@ -75,9 +75,9 @@ LinkClock : TempoClock {
 
 	prStartStopSync { |isPlaying|
 		if(isPlaying) {
-			onStart.value
+			onStart.value(this)
 		} {
-			onStop.value
+			onStop.value(this)
 		}
 	}
 
