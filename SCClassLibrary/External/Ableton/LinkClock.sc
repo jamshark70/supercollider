@@ -52,10 +52,8 @@ LinkClock : TempoClock {
 	}
 
 	setMeterAtBeat { |newBeatsPerBar, beats|
-		beatsPerBar = newBeatsPerBar;
-		barsPerBeat = beatsPerBar.reciprocal;
 		this.prSetQuantum(beatsPerBar);
-		this.changed(\meter);
+		super.setMeterAtBeat(newBeatsPerBar, beats);
 	}
 
 	// PRIVATE
