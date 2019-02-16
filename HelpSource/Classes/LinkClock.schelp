@@ -44,6 +44,23 @@ With a positive latency, if you examine code::t.beats::, it will appear to be la
 
 This does have an impact on tempo changes. SuperCollider receives tempo changes from other peers only after they are sent, which is probably slightly late for our clock. In practice, it means that events falling within the latency gap may be slightly out of sync, but sync should recover very quickly. (So, Link is not ideal for music involving frequent tempo or meter changes.)
 
+Subsection:: Notifications
+
+A LinkClock's state may be changed by other connected Link peers. LinkClock uses dependant notifications to relay the new state to other interested objects.
+
+table::
+## strong::Notification:: || strong::Event::
+## code::\tempo:: || Tempo changed
+## code::\meter:: || The clock's code::beatsPerBar:: changed
+## code::\linkStarted:: || An external peer started playback
+## code::\linkStop:: || An external peer stopped playback
+## code::\numPeers:: || The number of connected peers changed
+::
+
+(Note that Link does not synchronize meter across peers; this notification is inherited from TempoClock.)
+
+The most convenient way to register to receive a notification is link::Classes/SimpleController::. See the examples below.
+
 Classmethods::
 
 method::new
@@ -84,7 +101,7 @@ synchronized with the Link session.
 
 Instancemethods::
 
-private:: initFromTempoClock, prSetQuantum, prStart, prTempoChanged
+private:: initFromTempoClock, prSetQuantum, prStart, prTempoChanged, prStartStopSync, prNumPeersChanged
 
 method:: latency
 Gets or sets the number of seconds of OSC messaging latency for which the code::LinkClock:: should account. In general, this should be set to match the server object's latency.
@@ -134,14 +151,62 @@ s.waitForBoot({
 });
 )
 
-// try to lauch a program using Ableton Link to test synchronization
-
 // create a synchronized clock
 l = LinkClock(1).latency_(Server.default.latency);
 
+// GUI to watch status
+(
+var win = Window("LinkClock", Rect(200, 200, 500, 100)).front,
+peersBox, tempoBox, barsBox, beatsBox,
+font = Font.default.copy.size_(32),
+boldFont = font.boldVariant,
+controller, task;
+
+win.layout = HLayout(
+	StaticText().font_(font).string_("Peers:"),
+	peersBox = NumberBox().font_(boldFont).align_(\center).fixedWidth_(80),
+	StaticText().font_(font).string_("Tempo:"),
+	tempoBox = NumberBox().font_(boldFont).align_(\center).fixedWidth_(120),
+	StaticText().font_(font).string_("Now:"),
+	barsBox = NumberBox().font_(boldFont).align_(\center).fixedWidth_(80),
+	beatsBox = NumberBox().font_(boldFont).align_(\center).fixedWidth_(80)
+);
+
+[peersBox, barsBox, beatsBox].do { |view| view.enabled_(false) };
+
+tempoBox.action = { |view| l.tempo = view.value / 60 };
+tempoBox.value = l.tempo * 60;
+peersBox.value = l.numPeers;
+
+task = Routine {
+	var bars, beats;
+	loop {
+		bars = l.bar;
+		beats = l.beatInBar;
+		{
+			barsBox.value = bars;
+			beatsBox.value = beats;
+		}.defer(l.latency);
+		1.0.wait;
+	}
+}.play(l, quant: 1);
+
+controller = SimpleController(l)
+.put(\tempo, {
+	defer { tempoBox.value = l.tempo * 60 }
+})
+.put(\numPeers, {
+	defer { peersBox.value = l.numPeers }
+});
+
+win.onClose = { task.stop; controller.remove };
+)
+
+// now launch a program using Ableton Link to test synchronization
+
 // patterns automatically apply server latency,
 // so this should be in sync
-p = Pbind(\instrument, \click, \freq, Pseq([900, Pn(400,3)],inf)).play(l, quant:4);
+p = Pbind(\instrument, \click, \freq, Pseq([900, Pn(400,3)], inf)).play(l, quant:4);
 
 // In Tasks, you should handle latency yourself:
 (
@@ -152,7 +217,7 @@ r = Task {
 		});
 		1.wait;
 	}
-}.play(t, quant: 4);
+}.play(l, quant: 4);
 )
 
 // changing the tempo in another application should affect tempo in SC
