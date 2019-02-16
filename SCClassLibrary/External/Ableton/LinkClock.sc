@@ -81,6 +81,10 @@ LinkClock : TempoClock {
 		}
 	}
 
+	prNumPeersChanged { |numPeers|
+		this.changed(\numPeers, numPeers);
+	}
+
 	latency {
 		_LinkClock_GetLatency
 		^this.primitiveFailed
