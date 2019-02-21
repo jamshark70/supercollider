@@ -23,7 +23,7 @@ TestLinkClock : UnitTest {
 
 		// signal semaphore after a certain time to avoid
 		// blocking the function
-		clock2.sched(2, { semaphore.signal});
+		clock2.sched(2, { semaphore.signal });
 
 		semaphore.wait;
 		this.assertFloatEquals( clock2.tempo, clock1.tempo,
@@ -70,7 +70,7 @@ TestLinkClock : UnitTest {
 
 		// test sync at 20 bpm
 		clock1.tempo = 20/60;
-		clock2.sched(2, { semaphore.signal});
+		clock2.sched(2, { semaphore.signal });
 		semaphore.wait;
 
 		phase1[0] = clock1.beatInBar;
@@ -78,7 +78,7 @@ TestLinkClock : UnitTest {
 
 		// test sync at 999 bpm
 		clock1.tempo = 999/60;
-		clock2.sched(2, { semaphore.signal});
+		clock2.sched(2, { semaphore.signal });
 		semaphore.wait;
 
 		phase1[1] = clock1.beatInBar;
@@ -183,7 +183,7 @@ TestLinkClock : UnitTest {
 			thisThread.clock.stop;
 			semaphore.signal;
 		});
-		routine = { loop{ 0.01.wait} }.fork(tempoClock);
+		routine = { loop{ 0.01.wait } }.fork(tempoClock);
 		streamplayer = Pbind(\dur, 0.02).play(tempoClock);
 		0.1.wait;
 
