@@ -184,7 +184,7 @@ TestLinkClock : UnitTest {
 			semaphore.signal;
 		});
 		routine = { loop{ 0.01.wait} }.fork(tempoClock);
-		streamplayer = Pbind(\dur, 0.1).play(tempoClock);
+		streamplayer = Pbind(\dur, 0.02).play(tempoClock);
 		0.1.wait;
 
 		linkClock = LinkClock.newFromTempoClock(tempoClock);
