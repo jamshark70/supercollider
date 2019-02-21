@@ -2,9 +2,6 @@
 
 LinkClock : TempoClock {
 
-	var <>tempoChanged;
-	var <>onStart, <>onStop;
-
 	*newFromTempoClock { |clock|
 		^super.new(
 			clock.tempo,
@@ -70,14 +67,13 @@ LinkClock : TempoClock {
 	// run tempo changed callback
 	prTempoChanged { |tempo, beats, secs, clock|
 		this.changed(\tempo);
-		tempoChanged.value(tempo, beats, secs, clock);
 	}
 
 	prStartStopSync { |isPlaying|
 		if(isPlaying) {
-			onStart.value(this)
+			this.changed(\linkStart);
 		} {
-			onStop.value(this)
+			this.changed(\linkStop);
 		}
 	}
 
