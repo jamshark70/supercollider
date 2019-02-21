@@ -8,18 +8,22 @@ TestLinkClock : UnitTest {
 	// Test Plan - TEMPO-1
 	test_transmission_tempo {
 		var clock1, clock2;
-		var semaphore = Semaphore(0);
+		var semaphore = Semaphore(0),
+		controller;
 
 		clock1 = LinkClock.new;
 		clock2 = LinkClock.new;
-		clock2.tempoChanged = { semaphore.signal};
+		controller = SimpleController(clock2).put(\tempo, {
+			controller.remove;
+			semaphore.signal
+		});
 
 		0.2.wait;
 		clock1.tempo = rrand(20,999)/60;
 
 		// signal semaphore after a certain time to avoid
 		// blocking the function
-		clock2.sched(2, { semaphore.signal});
+		clock2.sched(2, { semaphore.signal});
 
 		semaphore.wait;
 		this.assertFloatEquals( clock2.tempo, clock1.tempo,
@@ -54,13 +58,15 @@ TestLinkClock : UnitTest {
 	// Test Plan - TEMPO-4
 	test_sync {
 		var clock1, clock2;
-		var semaphore = Semaphore(0);
+		var semaphore = Semaphore(0), controller;
 		var phase1 = Array.newClear(2),
 			phase2 = Array.newClear(2);
 
 		clock1 = LinkClock(1).beats_(100.0.rand);
 		clock2 = LinkClock(1).beats_(100.0.rand);
-		clock2.tempoChanged = { semaphore.signal};
+		controller = SimpleController(clock2).put(\tempo, {
+			semaphore.signal
+		});
 
 		// test sync at 20 bpm
 		clock1.tempo = 20/60;
@@ -85,6 +91,7 @@ TestLinkClock : UnitTest {
 
 		clock1.stop;
 		clock2.stop;
+		controller.remove;
 	}
 
 	// Test Plan - TEMPO-5
