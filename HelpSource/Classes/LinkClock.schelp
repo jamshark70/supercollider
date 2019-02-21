@@ -52,7 +52,7 @@ table::
 ## strong::Notification:: || strong::Event::
 ## code::\tempo:: || Tempo changed
 ## code::\meter:: || The clock's code::beatsPerBar:: changed
-## code::\linkStarted:: || An external peer started playback
+## code::\linkStart:: || An external peer started playback
 ## code::\linkStop:: || An external peer stopped playback
 ## code::\numPeers:: || The number of connected peers changed
 ::
@@ -101,7 +101,7 @@ synchronized with the Link session.
 
 Instancemethods::
 
-private:: initFromTempoClock, prSetQuantum, prStart, prTempoChanged, prStartStopSync, prNumPeersChanged
+private:: initFromTempoClock, prSetQuantum, prStart, prTempoChanged, prStartStopSync, prNumPeersChanged, setMeterAtBeat, setTempoAtBeat, setTempoAtSec
 
 method:: latency
 Gets or sets the number of seconds of OSC messaging latency for which the code::LinkClock:: should account. In general, this should be set to match the server object's latency.
@@ -109,34 +109,20 @@ argument:: lat
 A Float.
 
 method:: tempo
-Sets or gets the current session tempo at the current logical time. Note that
-the tempo may be changed at any time by another peer.
+Sets or gets the current session tempo at the current logical
+time. Note that the tempo may be changed at any time by another peer;
+the LinkClock broadcasts a code::\tempo:: notification in this case
+(see link::Classes/LinkClock#Notifications::).
 
 method:: beats
 Sets or gets the current logical time in beats. If you are trying to set
 the beats, Link may adjust your given value to maintain sync with other peers.
 
 method:: numPeers
-Gets the number of peers connected to the current Link session.
-
-method:: tempoChanged
-argument:: value
-A link::Classes/Function:: evaluated whenever the session tempo is changed. It
-is passed the following arguments:
-definitionList::
-## tempo || the new tempo
-## beats || the elapsed time in beats when tempo was changed.
-## seconds || the elapsed time in seconds when tempo was changed.
-## clock || a reference to this object
-::
-
-May be soon deprecated. It is recommended to use a link::Classes/SimpleController:: to register for code::\tempo:: notifications instead.
-
-method:: onStart
-Gets or sets a link::Classes/Function::, to be evaluated whenever a peer sends a message that it has started playback. It is passed the clock object as an argument.
-
-method:: onStop
-Gets or sets a link::Classes/Function::, to be evaluated whenever a peer sends a message that it has stopped playback. It is passed the clock object as an argument.
+Gets the number of peers connected to the current Link session. When
+peers join or leave the session, the LinkClock broadcasts a
+code::\numPeers:: notification (see
+link::Classes/LinkClock#Notifications::).
 
 Examples::
 
@@ -197,7 +183,8 @@ controller = SimpleController(l)
 })
 .put(\numPeers, {
 	defer { peersBox.value = l.numPeers }
-});
+})
+.put(\stop, { defer { win.close } });
 
 win.onClose = { task.stop; controller.remove };
 )
@@ -223,6 +210,26 @@ r = Task {
 // changing the tempo in another application should affect tempo in SC
 // changing the tempo in SC should affect every connected application
 l.tempo = 90/60;
+
+// start/stop notifications
+// the remote peer should enable start/stop sync
+(
+q = nil;
+c = SimpleController(l)
+.put(\linkStart, {
+	if(q.isNil) {
+		q = Pbind(
+			\degree, Pn(Pseries(0, 1, 8), inf),
+			\dur, 0.25
+		).play(l, quant: -1);
+	}
+})
+.put(\linkStop, {
+	q.stop;
+	q = nil;
+})
+.put(\stop, { c.remove });  // clean up if clock stops
+)
 
 p.stop;
 r.stop;
