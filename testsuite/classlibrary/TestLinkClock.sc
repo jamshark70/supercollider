@@ -6,7 +6,8 @@ TestLinkClock : UnitTest {
 	// see external_libraries/link/TEST-PLAN.md
 
 	// Test Plan - TEMPO-1
-	test_transmission_tempo {
+	// Tempo changes should be transmitted between connected apps.
+	test_settingTempo_transmitsToLinkPeers {
 		var clock1, clock2;
 		var semaphore = Semaphore(0),
 		controller;
@@ -36,7 +37,8 @@ TestLinkClock : UnitTest {
 	}
 
 	// Test Plan - TEMPO-2
-	test_preserve_session_tempo {
+	// Opening an app with Link enabled should not change the tempo of an existing Link session.
+	test_newLinkClock_shouldNotChangeLinkTempo {
 		var clock1, clock2, sessionTempo;
 
 		clock1 = LinkClock(130/60);
@@ -55,8 +57,13 @@ TestLinkClock : UnitTest {
 		clock2.stop;
 	}
 
+	// Test Plan - TEMPO-3
+	// When connected, loading a new document should not change the Link session tempo.
+	// SC does not change tempo when opening a code document, so this test is irrelevant.
+
 	// Test Plan - TEMPO-4
-	test_sync {
+	// Tempo range handling.
+	test_settingTempo_maintainsSyncOver20To999BPM {
 		var clock1, clock2;
 		var semaphore = Semaphore(0), controller;
 		var phase1 = Array.newClear(2),
@@ -95,7 +102,8 @@ TestLinkClock : UnitTest {
 	}
 
 	// Test Plan - TEMPO-5
-	test_no_session_tempo {
+	// Enabling Link does not change app's tempo if there is no Link session to join.
+	test_newLinkClock_usesOwnTempoIfNoSession {
 		var clock, tempo;
 
 		tempo = rrand(20,999)/60;
@@ -118,7 +126,8 @@ TestLinkClock : UnitTest {
 	}
 
 	// Test Plan - BEATTIME-1
-	test_no_session_beattime {
+	// Enabling Link does not change app's beat time if there is no Link session to join.
+	test_newLinkClock_usesOwnBeatsIfNoSession {
 		var clock, beats, secs;
 
 		clock = LinkClock(1).beats_(100.0.rand);
@@ -143,7 +152,8 @@ TestLinkClock : UnitTest {
 	}
 
 	// Test Plan - BEATTIME-2
-	test_no_change_beattime {
+	// App's beat time does not change if another participant joins its session.
+	test_newLinkClock_syncsBeatsToExistingLinkClock {
 		var clock1, clock2;
 		var beats;
 
@@ -154,16 +164,16 @@ TestLinkClock : UnitTest {
 		clock2 = LinkClock(1);
 
 		this.assertEquals( clock1.beats, beats,
-			"clock beats should not change when a participant joins its session"
+			"first clock's beats should not change when a participant joins its session"
 		);
 
 		clock1.stop;
 		clock2.stop;
 	}
 
-	// test starting a LinkClock from a TempoClock and reschulding
-	// all its tasks
-	test_from_TempoClock {
+	// test starting a LinkClock from a TempoClock and rescheduling all its tasks
+	// SC-specific test, not part of Ableton's test plan
+	test_newFromTempoClock_reschedulesOldClockQueue {
 		var tempoClock = TempoClock.new;
 		var linkClock;
 		var routine, streamplayer;
