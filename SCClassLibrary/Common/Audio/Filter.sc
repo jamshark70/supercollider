@@ -55,6 +55,8 @@ Decay : Filter {
 	*kr { arg in = 0.0, decayTime = 1.0, mul = 1.0, add = 0.0;
 		^this.multiNew('control', in, decayTime).madd(mul, add)
 	}
+
+	signalRange { ^\unipolar }
 }
 
 Decay2 : Filter {
@@ -65,6 +67,8 @@ Decay2 : Filter {
 	*kr { arg in = 0.0, attackTime = 0.01, decayTime = 1.0, mul = 1.0, add = 0.0;
 		^this.multiNew('control', in, attackTime, decayTime).madd(mul, add)
 	}
+
+	signalRange { ^\unipolar }
 }
 
 Lag : Filter {
