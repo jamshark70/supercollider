@@ -321,7 +321,7 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                 PaError err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
                 if (err != paNoError) {
                     fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
-                            Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*outDevice)->name);
+                            Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*inDevice)->name);
                 }
             }
         }
@@ -356,7 +356,7 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                     Pa_IsFormatSupported(nullptr, &parameters, Pa_GetDeviceInfo(*outDevice)->defaultSampleRate);
                 if (err != paNoError) {
                     fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
-                            Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*inDevice)->name);
+                            Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*outDevice)->name);
                 }
             }
         }
