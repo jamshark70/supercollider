@@ -317,7 +317,7 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                 parameters.device = *inDevice;
                 parameters.sampleFormat = fmt;
                 parameters.hostApiSpecificStreamInfo = NULL;
-                parameters.channelCount = Pa_GetDeviceInfo(*outDevice)->maxOutputChannels;
+                parameters.channelCount = Pa_GetDeviceInfo(*inDevice)->maxOutputChannels;
                 PaError err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
                 if (err != paNoError) {
                     fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
