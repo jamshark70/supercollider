@@ -100,7 +100,7 @@ code::
 
 section:: Windows
 
-By default the server will try to boot using an teletype::ASIO:: device, regardless of Windows' default audio settings. If teletype::ASIO:: device is not available, the server will boot to your system's default audio devices using teletype::MME:: driver (which usually means higher latency).
+By default the server will boot to your system's default audio devices using teletype::MME:: driver (which usually means higher latency).
 
 On Windows there are multiple audio driver APIs (e.g. teletype::MME::, teletype::WASAPI::, teletype::ASIO:: etc.) that can be used to communicate with audio devices. The API (listed before the device name) needs to match between the input and the output, for example:
 code::
@@ -160,7 +160,7 @@ LIST::
 LIST::
 ## strong::Multichannel operation: :: Usually no
 ## strong::Typical latency: :: High
-## strong::Caveats: :: It is the oldest API on this list; it is chosen by default if teletype::ASIO:: driver is not available and user does not specify which device to use
+## strong::Caveats: :: It is the oldest API on this list; it is chosen by default if the user does not specify which device to use
 ## strong::More info: :: This API might work out-of-the-box, but choosing a newer one instead will usually provide better performance; MME stands for Multimedia Extension (for Windows 3.0)
 ::
 ::
