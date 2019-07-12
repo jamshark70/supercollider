@@ -266,7 +266,6 @@ int SC_PortAudioDriver::PortAudioCallback(const void* input, void* output, unsig
 
 void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) {
     const PaDeviceInfo* pdi;
-    const PaHostApiInfo* apiInfo;
     char devString[256];
     PaDeviceIndex numDevices = Pa_GetDeviceCount();
     *mInOut = paNoDevice;
@@ -274,17 +273,20 @@ void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IO
     for (int i = 0; i < numDevices; i++) {
         pdi = Pa_GetDeviceInfo(i);
 #ifndef __APPLE__
+        const PaHostApiInfo* apiInfo;
         apiInfo = Pa_GetHostApiInfo(pdi->hostApi);
         strcpy(devString, apiInfo->name);
         strcat(devString, " : ");
-#endif
         strcat(devString, pdi->name);
+#else
+        strcpy(devString, pdi->name);
+#endif
         // compare strings, but if the string is not empty
         if (strstr(devString, device) && device && device[0]) {
             if (ioType == IOType::Input) {
                 if (pdi->maxInputChannels > 0)
                     *mInOut = i;
-            } else {
+            } else if (ioType == IOType::Output) {
                 if (pdi->maxOutputChannels > 0)
                     *mInOut = i;
             }
@@ -522,8 +524,12 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
             // avoid to allocate the 128 virtual channels reported by the portaudio library for ALSA "default"
             mInputChannelCount =
                 std::min<size_t>(mWorld->mNumInputs, Pa_GetDeviceInfo(mDeviceInOut[0])->maxInputChannels);
+#ifndef __APPLE__
             fprintf(stdout, "  In: %s : %s\n", Pa_GetHostApiInfo(Pa_GetDeviceInfo(mDeviceInOut[0])->hostApi)->name,
                     Pa_GetDeviceInfo(mDeviceInOut[0])->name);
+#else
+            fprintf(stdout, "  In: %s\n", Pa_GetDeviceInfo(mDeviceInOut[0])->name);
+#endif
         } else {
             mInputChannelCount = 0;
         }
@@ -532,8 +538,12 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
             // avoid to allocate the 128 virtual channels reported by the portaudio library for ALSA "default"
             mOutputChannelCount =
                 std::min<size_t>(mWorld->mNumOutputs, Pa_GetDeviceInfo(mDeviceInOut[1])->maxOutputChannels);
+#ifndef __APPLE__
             fprintf(stdout, "  Out: %s : %s\n", Pa_GetHostApiInfo(Pa_GetDeviceInfo(mDeviceInOut[1])->hostApi)->name,
                     Pa_GetDeviceInfo(mDeviceInOut[1])->name);
+#else
+            fprintf(stdout, "  Out: %s\n", Pa_GetDeviceInfo(mDeviceInOut[1])->name);
+#endif
         } else {
             mOutputChannelCount = 0;
         }
