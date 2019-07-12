@@ -300,14 +300,6 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
     if (numIns && !numOuts) {
         // inputs only
         *outDevice = paNoDevice;
-#ifdef _WIN32
-        // in case we don't have a proper device, let's try to open one on ASIO
-        if (*inDevice == paNoDevice) {
-            *inDevice = Pa_GetHostApiInfo(Pa_HostApiTypeIdToHostApiIndex(paASIO))->defaultInputDevice;
-            if (*inDevice != paNoDevice)
-                fprintf(stdout, "Selected default ASIO input device\n");
-        }
-#endif
         // check for requested sample rate
         if (*inDevice != paNoDevice) {
             if (sampleRate) {
@@ -334,14 +326,6 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
     } else if (!numIns && numOuts) {
         // outputs only
         *inDevice = paNoDevice;
-#ifdef _WIN32
-        // in case we don't have a proper device, let's try to open one on ASIO
-        if (*outDevice == paNoDevice) {
-            *outDevice = Pa_GetHostApiInfo(Pa_HostApiTypeIdToHostApiIndex(paASIO))->defaultOutputDevice;
-            if (*outDevice != paNoDevice)
-                fprintf(stdout, "Selected default ASIO output device\n");
-        }
-#endif
         // check for requested sample rate
         if (*outDevice != paNoDevice) {
             if (sampleRate) {
@@ -382,7 +366,6 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                 fprintf(stdout, "Selected default %s output device\n",
                         Pa_GetHostApiInfo(Pa_GetDeviceInfo(*outDevice)->hostApi)->name);
         }
-#ifdef _WIN32
         // check if devices are having mismatched API, but only if they are defined
         if (*inDevice != paNoDevice && *outDevice != paNoDevice) {
             if (Pa_GetDeviceInfo(*inDevice)->hostApi != Pa_GetDeviceInfo(*outDevice)->hostApi) {
@@ -394,14 +377,6 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                 *outDevice = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->defaultOutputDevice;
             }
         }
-        // in case we don't have a proper device, let's try to open one on ASIO
-        if (*inDevice == paNoDevice || *outDevice == paNoDevice) {
-            *inDevice = Pa_GetHostApiInfo(Pa_HostApiTypeIdToHostApiIndex(paASIO))->defaultInputDevice;
-            *outDevice = Pa_GetHostApiInfo(Pa_HostApiTypeIdToHostApiIndex(paASIO))->defaultOutputDevice;
-            if (*inDevice != paNoDevice && *outDevice != paNoDevice)
-                fprintf(stdout, "Selected default ASIO input/output devices\n");
-        }
-#endif
         // check for matching sampleRate or requested sample rate
         if (*inDevice != paNoDevice && *outDevice != paNoDevice) {
             // these parameters are taken from the DriverSetup, here used for checking only
