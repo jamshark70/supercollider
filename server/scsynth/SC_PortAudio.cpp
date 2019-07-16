@@ -90,6 +90,7 @@ public:
 
 private:
     void GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType);
+    std::string GetPaDeviceName(int index);
     PaError CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate);
 };
 
@@ -264,31 +265,38 @@ int SC_PortAudioDriver::PortAudioCallback(const void* input, void* output, unsig
     return paContinue;
 }
 
+std::string SC_PortAudioDriver::GetPaDeviceName(int index) {
+    const PaDeviceInfo* pdi;
+    pdi = Pa_GetDeviceInfo(index);
+    std::string name;
+#ifndef __APPLE__
+    const PaHostApiInfo* apiInfo;
+    apiInfo = Pa_GetHostApiInfo(pdi->hostApi);
+    name.append(apiInfo->name);
+    name.append(" : ");
+#endif
+    name.append(pdi->name);
+    return name;
+}
+
 void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) {
     const PaDeviceInfo* pdi;
-    char devString[256];
     PaDeviceIndex numDevices = Pa_GetDeviceCount();
     *mInOut = paNoDevice;
 
-    for (int i = 0; i < numDevices; i++) {
-        pdi = Pa_GetDeviceInfo(i);
-#ifndef __APPLE__
-        const PaHostApiInfo* apiInfo;
-        apiInfo = Pa_GetHostApiInfo(pdi->hostApi);
-        strcpy(devString, apiInfo->name);
-        strcat(devString, " : ");
-        strcat(devString, pdi->name);
-#else
-        strcpy(devString, pdi->name);
-#endif
-        // compare strings, but if the string is not empty
-        if (strstr(devString, device) && device && device[0]) {
-            if (ioType == IOType::Input) {
-                if (pdi->maxInputChannels > 0)
+    if (device) {
+        for (int i = 0; i < numDevices; i++) {
+            pdi = Pa_GetDeviceInfo(i);
+            std::string devString = GetPaDeviceName(i);
+            // compare strings, but only if the string is not empty
+            if (strstr(devString.c_str(), device) && device[0]) {
+                if (ioType == IOType::Input && pdi->maxInputChannels > 0) {
                     *mInOut = i;
-            } else if (ioType == IOType::Output) {
-                if (pdi->maxOutputChannels > 0)
+                    break;
+                } else if (ioType == IOType::Output && pdi->maxOutputChannels > 0) {
                     *mInOut = i;
+                    break;
+                }
             }
         }
     }
@@ -310,7 +318,7 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                 PaStreamParameters parameters;
                 parameters.device = *inDevice;
                 parameters.sampleFormat = fmt;
-                parameters.hostApiSpecificStreamInfo = NULL;
+                parameters.hostApiSpecificStreamInfo = nullptr;
                 parameters.channelCount = Pa_GetDeviceInfo(*inDevice)->maxOutputChannels;
                 PaError err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
                 if (err != paNoError) {
@@ -336,10 +344,11 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                 PaStreamParameters parameters;
                 parameters.device = *outDevice;
                 parameters.sampleFormat = fmt;
-                parameters.hostApiSpecificStreamInfo = NULL;
+                parameters.hostApiSpecificStreamInfo = nullptr;
                 parameters.channelCount = Pa_GetDeviceInfo(*outDevice)->maxOutputChannels;
                 PaError err =
-                    Pa_IsFormatSupported(nullptr, &parameters, Pa_GetDeviceInfo(*outDevice)->defaultSampleRate);
+                    // Pa_IsFormatSupported(nullptr, &parameters, Pa_GetDeviceInfo(*outDevice)->defaultSampleRate);
+                    Pa_IsFormatSupported(nullptr, &parameters, sampleRate);
                 if (err != paNoError) {
                     fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
                             Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*outDevice)->name);
@@ -450,14 +459,8 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
     fprintf(stdout, "\nDevice options:\n");
     for (int i = 0; i < numDevices; i++) {
         pdi = Pa_GetDeviceInfo(i);
-#ifndef __APPLE__
-        apiInfo = Pa_GetHostApiInfo(pdi->hostApi);
-        fprintf(stdout, "  - %s : %s   (device #%d with %d ins %d outs)\n", apiInfo->name, pdi->name, i,
+        fprintf(stdout, "  - %s   (device #%d with %d ins %d outs)\n", GetPaDeviceName(i).c_str(), i,
                 pdi->maxInputChannels, pdi->maxOutputChannels);
-#else
-        fprintf(stdout, "  - %s   (device #%d with %d ins %d outs)\n", pdi->name, i, pdi->maxInputChannels,
-                pdi->maxOutputChannels);
-#endif
     }
 
     mDeviceInOut[0] = paNoDevice;
@@ -524,12 +527,7 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
             // avoid to allocate the 128 virtual channels reported by the portaudio library for ALSA "default"
             mInputChannelCount =
                 std::min<size_t>(mWorld->mNumInputs, Pa_GetDeviceInfo(mDeviceInOut[0])->maxInputChannels);
-#ifndef __APPLE__
-            fprintf(stdout, "  In: %s : %s\n", Pa_GetHostApiInfo(Pa_GetDeviceInfo(mDeviceInOut[0])->hostApi)->name,
-                    Pa_GetDeviceInfo(mDeviceInOut[0])->name);
-#else
-            fprintf(stdout, "  In: %s\n", Pa_GetDeviceInfo(mDeviceInOut[0])->name);
-#endif
+            fprintf(stdout, "  In: %s\n", GetPaDeviceName(mDeviceInOut[0]).c_str());
         } else {
             mInputChannelCount = 0;
         }
@@ -538,12 +536,7 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
             // avoid to allocate the 128 virtual channels reported by the portaudio library for ALSA "default"
             mOutputChannelCount =
                 std::min<size_t>(mWorld->mNumOutputs, Pa_GetDeviceInfo(mDeviceInOut[1])->maxOutputChannels);
-#ifndef __APPLE__
-            fprintf(stdout, "  Out: %s : %s\n", Pa_GetHostApiInfo(Pa_GetDeviceInfo(mDeviceInOut[1])->hostApi)->name,
-                    Pa_GetDeviceInfo(mDeviceInOut[1])->name);
-#else
-            fprintf(stdout, "  Out: %s\n", Pa_GetDeviceInfo(mDeviceInOut[1])->name);
-#endif
+            fprintf(stdout, "  In: %s\n", GetPaDeviceName(mDeviceInOut[1]).c_str());
         } else {
             mOutputChannelCount = 0;
         }
