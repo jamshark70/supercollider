@@ -92,6 +92,7 @@ private:
     void GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType);
     std::string GetPaDeviceName(int index);
     PaError CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate);
+    PaError CheckSinglePaDevice(int* device, double sampleRate, IOType ioType);
 };
 
 SC_AudioDriver* SC_NewAudioDriver(struct World* inWorld) { return new SC_PortAudioDriver(inWorld); }
@@ -302,6 +303,41 @@ void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IO
     }
 }
 
+PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, IOType ioType) {
+    if (*device != paNoDevice && sampleRate) {
+        // check if device can support requested SR
+        PaSampleFormat fmt = paFloat32 | paNonInterleaved;
+        PaStreamParameters parameters;
+        parameters.device = *device;
+        parameters.sampleFormat = fmt;
+        parameters.hostApiSpecificStreamInfo = nullptr;
+        if (ioType == IOType::Input) {
+            parameters.channelCount = Pa_GetDeviceInfo(*device)->maxInputChannels;
+        } else if (ioType == IOType::Output) {
+            parameters.channelCount = Pa_GetDeviceInfo(*device)->maxOutputChannels;
+        }
+        
+        PaError err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
+        if (err != paNoError) {
+            fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
+                    Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*device)->name);
+            return err;
+        }
+    }
+    // in case we still don't have a proper device, use the default device
+    if (*device == paNoDevice) {
+        if (ioType == IOType::Input) {
+            *device = Pa_GetDefaultInputDevice();
+        } else if (ioType == IOType::Output) {
+            *device = Pa_GetDefaultOutputDevice();
+        }
+        
+        if (*device != paNoDevice)
+            fprintf(stdout, "Selecting default system %s device\n", (ioType == IOType::Input ? "input" : "output"));
+    }
+    return paNoError;
+}
+
 // this function will select default PA devices if they are not defined
 // it will also try to check for some configuration problems
 // numIns, numOuts and sampleRate are only the requested values, can change later
@@ -310,58 +346,13 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
     if (numIns && !numOuts) {
         // inputs only
         *outDevice = paNoDevice;
-        // check for requested sample rate
-        if (*inDevice != paNoDevice) {
-            if (sampleRate) {
-                // check if device can support requested SR
-                PaSampleFormat fmt = paFloat32 | paNonInterleaved;
-                PaStreamParameters parameters;
-                parameters.device = *inDevice;
-                parameters.sampleFormat = fmt;
-                parameters.hostApiSpecificStreamInfo = nullptr;
-                parameters.channelCount = Pa_GetDeviceInfo(*inDevice)->maxOutputChannels;
-                PaError err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
-                if (err != paNoError) {
-                    fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
-                            Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*inDevice)->name);
-                }
-            }
-        }
-        // in case we still don't have a proper device, use the default device
-        if (*inDevice == paNoDevice) {
-            *inDevice = Pa_GetDefaultInputDevice();
-            if (*inDevice != paNoDevice)
-                fprintf(stdout, "Selected default system input device\n");
-        }
+        // check for requested sample rate or select the default device
+        return CheckSinglePaDevice(inDevice, sampleRate, IOType::Input);
     } else if (!numIns && numOuts) {
         // outputs only
         *inDevice = paNoDevice;
-        // check for requested sample rate
-        if (*outDevice != paNoDevice) {
-            if (sampleRate) {
-                // check if device can support requested SR
-                PaSampleFormat fmt = paFloat32 | paNonInterleaved;
-                PaStreamParameters parameters;
-                parameters.device = *outDevice;
-                parameters.sampleFormat = fmt;
-                parameters.hostApiSpecificStreamInfo = nullptr;
-                parameters.channelCount = Pa_GetDeviceInfo(*outDevice)->maxOutputChannels;
-                PaError err =
-                    // Pa_IsFormatSupported(nullptr, &parameters, Pa_GetDeviceInfo(*outDevice)->defaultSampleRate);
-                    Pa_IsFormatSupported(nullptr, &parameters, sampleRate);
-                if (err != paNoError) {
-                    fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
-                            Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*outDevice)->name);
-                }
-            }
-        }
-
-        // in case we still don't have a proper device, use the default device
-        if (*outDevice == paNoDevice) {
-            *outDevice = Pa_GetDefaultOutputDevice();
-            if (*outDevice != paNoDevice)
-                fprintf(stdout, "Selected default system output device\n");
-        }
+        // check for requested sample rate or select the default device
+        return CheckSinglePaDevice(outDevice, sampleRate, IOType::Output);
     } else if (numIns && numOuts) {
         // inputs and outputs
         // if one device is specified, let's try to open another one on matching api
