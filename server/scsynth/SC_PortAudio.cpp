@@ -93,6 +93,7 @@ private:
     std::string GetPaDeviceName(int index);
     PaError CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate);
     PaError CheckSinglePaDevice(int* device, double sampleRate, IOType ioType);
+    void SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType);
 };
 
 SC_AudioDriver* SC_NewAudioDriver(struct World* inWorld) { return new SC_PortAudioDriver(inWorld); }
@@ -316,7 +317,7 @@ PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, 
         } else if (ioType == IOType::Output) {
             parameters.channelCount = Pa_GetDeviceInfo(*device)->maxOutputChannels;
         }
-        
+
         PaError err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
         if (err != paNoError) {
             fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
@@ -331,11 +332,26 @@ PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, 
         } else if (ioType == IOType::Output) {
             *device = Pa_GetDefaultOutputDevice();
         }
-        
+
         if (*device != paNoDevice)
             fprintf(stdout, "Selecting default system %s device\n", (ioType == IOType::Input ? "input" : "output"));
     }
     return paNoError;
+}
+
+void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType) {
+    if (*matchingDevice == paNoDevice && *knownDevice != paNoDevice) {
+        const PaHostApiInfo* apiInfo;
+        apiInfo = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*knownDevice)->hostApi);
+        if (matchingDeviceType == IOType::Input) {
+            *matchingDevice = apiInfo->defaultInputDevice;
+        } else if (matchingDeviceType == IOType::Output) {
+            *matchingDevice = apiInfo->defaultOutputDevice;
+        }
+        if (*matchingDevice != paNoDevice)
+            fprintf(stdout, "Selecting default %s %s device\n", apiInfo->name,
+                    (matchingDeviceType == IOType::Input ? "input" : "output"));
+    }
 }
 
 // this function will select default PA devices if they are not defined
@@ -356,28 +372,19 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
     } else if (numIns && numOuts) {
         // inputs and outputs
         // if one device is specified, let's try to open another one on matching api
-        if (*inDevice == paNoDevice && *outDevice != paNoDevice) {
-            *inDevice = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*outDevice)->hostApi)->defaultInputDevice;
-            if (*inDevice != paNoDevice)
-                fprintf(stdout, "Selected default %s input device\n",
-                        Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->name);
-        }
-        if (*inDevice != paNoDevice && *outDevice == paNoDevice) {
-            *outDevice = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->defaultOutputDevice;
-            if (*outDevice != paNoDevice)
-                fprintf(stdout, "Selected default %s output device\n",
-                        Pa_GetHostApiInfo(Pa_GetDeviceInfo(*outDevice)->hostApi)->name);
-        }
+        // try matching input to output
+        SelectMatchingPaDevice(inDevice, outDevice, IOType::Input);
+        // then try matching output to input
+        SelectMatchingPaDevice(outDevice, inDevice, IOType::Output);
         // check if devices are having mismatched API, but only if they are defined
-        if (*inDevice != paNoDevice && *outDevice != paNoDevice) {
-            if (Pa_GetDeviceInfo(*inDevice)->hostApi != Pa_GetDeviceInfo(*outDevice)->hostApi) {
-                fprintf(stdout, "Requested devices %s and %s use different API. Setting output device to %s : %s.\n",
-                        Pa_GetDeviceInfo(*inDevice)->name, Pa_GetDeviceInfo(*outDevice)->name,
-                        Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->name,
-                        Pa_GetDeviceInfo(Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->defaultOutputDevice)
-                            ->name);
-                *outDevice = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->defaultOutputDevice;
-            }
+        if (*inDevice != paNoDevice && *outDevice != paNoDevice
+            && Pa_GetDeviceInfo(*inDevice)->hostApi != Pa_GetDeviceInfo(*outDevice)->hostApi) {
+            fprintf(
+                stdout, "Requested devices %s and %s use different API. Setting output device to %s : %s.\n",
+                Pa_GetDeviceInfo(*inDevice)->name, Pa_GetDeviceInfo(*outDevice)->name,
+                Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->name,
+                Pa_GetDeviceInfo(Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->defaultOutputDevice)->name);
+            *outDevice = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->defaultOutputDevice;
         }
         // check for matching sampleRate or requested sample rate
         if (*inDevice != paNoDevice && *outDevice != paNoDevice) {
