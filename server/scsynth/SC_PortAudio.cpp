@@ -534,7 +534,7 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
             // avoid to allocate the 128 virtual channels reported by the portaudio library for ALSA "default"
             mOutputChannelCount =
                 std::min<size_t>(mWorld->mNumOutputs, Pa_GetDeviceInfo(mDeviceInOut[1])->maxOutputChannels);
-            fprintf(stdout, "  In: %s\n", GetPaDeviceName(mDeviceInOut[1]).c_str());
+            fprintf(stdout, "  Out: %s\n", GetPaDeviceName(mDeviceInOut[1]).c_str());
         } else {
             mOutputChannelCount = 0;
         }
