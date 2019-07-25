@@ -311,8 +311,8 @@ PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int* device, int ch
     streamParams.device = *device;
     streamParams.channelCount = channelCount;
     streamParams.sampleFormat = fmt;
-    if(suggestedLatency)
-      streamParams.suggestedLatency = suggestedLatency;
+    if (suggestedLatency)
+        streamParams.suggestedLatency = suggestedLatency;
     streamParams.hostApiSpecificStreamInfo = nullptr;
     return streamParams;
 }
@@ -471,20 +471,12 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
     // report requested devices
     fprintf(stdout, "\nRequested devices:\n");
     if (mWorld->mNumInputs) {
-        fprintf(stdout, "  In (matching device ");
-        if (mDeviceInOut[0] == paNoDevice)
-            fprintf(stdout, "NOT found");
-        else
-            fprintf(stdout, "found");
-        fprintf(stdout, "):\n  - %s\n", mWorld->hw->mInDeviceName);
+        fprintf(stdout, "  In (matching device %sfound):\n  - %s\n", (mDeviceInOut[0] == paNoDevice ? "NOT " : ""),
+                mWorld->hw->mInDeviceName);
     }
     if (mWorld->mNumOutputs) {
-        fprintf(stdout, "  Out (matching device ");
-        if (mDeviceInOut[1] == paNoDevice)
-            fprintf(stdout, "NOT found");
-        else
-            fprintf(stdout, "found");
-        fprintf(stdout, "):\n  - %s\n", mWorld->hw->mOutDeviceName);
+        fprintf(stdout, "  Out (matching device %sfound):\n  - %s\n", (mDeviceInOut[1] == paNoDevice ? "NOT " : ""),
+                mWorld->hw->mOutDeviceName);
     }
 
     fprintf(stdout, "\n");
