@@ -387,12 +387,10 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
         // check if devices are having mismatched API, but only if they are defined
         if (*inDevice != paNoDevice && *outDevice != paNoDevice
             && Pa_GetDeviceInfo(*inDevice)->hostApi != Pa_GetDeviceInfo(*outDevice)->hostApi) {
-            fprintf(
-                stdout, "Requested devices %s and %s use different API. Setting output device to %s : %s.\n",
-                Pa_GetDeviceInfo(*inDevice)->name, Pa_GetDeviceInfo(*outDevice)->name,
-                Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->name,
-                Pa_GetDeviceInfo(Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->defaultOutputDevice)->name);
+            fprintf(stdout, "Requested devices %s and %s use different API. ", GetPaDeviceName(*inDevice).c_str(),
+                    GetPaDeviceName(*outDevice).c_str());
             *outDevice = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*inDevice)->hostApi)->defaultOutputDevice;
+            fprintf(stdout, "Setting output device to %s.\n", GetPaDeviceName(*outDevice).c_str());
         }
         // check for matching sampleRate or requested sample rate
         if (*inDevice != paNoDevice && *outDevice != paNoDevice) {
@@ -404,7 +402,7 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                 PaError err = Pa_IsFormatSupported(&in_parameters, &out_parameters, sampleRate);
                 if (err != paNoError) {
                     fprintf(stdout, "\nRequested sample rate %f for devices %s and %s is not supported.\n", sampleRate,
-                            Pa_GetDeviceInfo(*inDevice)->name, Pa_GetDeviceInfo(*outDevice)->name);
+                            GetPaDeviceName(*inDevice).c_str(), GetPaDeviceName(*outDevice).c_str());
                     return err;
                 }
             } else {
@@ -420,7 +418,7 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
                                 "\nRequested devices %s and %s use different sample rates. "
                                 "Please set matching sample rates "
                                 "in the Windows Sound Control Panel and try again.\n",
-                                Pa_GetDeviceInfo(*inDevice)->name, Pa_GetDeviceInfo(*outDevice)->name);
+                                GetPaDeviceName(*inDevice).c_str(), GetPaDeviceName(*outDevice).c_str());
                         return err;
                     }
                 }
