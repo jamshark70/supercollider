@@ -586,7 +586,6 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
     }
 
     // should not be necessary, but a last try with OpenDefaultStream...
-    fprintf(stdout, "\nNo devices specified, attempting to use default system devices\n");
     paerror = Pa_OpenDefaultStream(&mStream, mWorld->mNumInputs, mWorld->mNumOutputs, paFloat32 | paNonInterleaved,
                                    *outSampleRate, *outNumSamples, SC_PortAudioStreamCallback, this);
     mInputChannelCount = mWorld->mNumInputs;
