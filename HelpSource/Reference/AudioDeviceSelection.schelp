@@ -109,7 +109,7 @@ o.inDevice_("Windows WASAPI : Microphone");
 o.outDevice_("Windows WASAPI : Speakers");
 Server.default.reboot;
 ::
-On Windows you strong::cannot:: programmatically obtain the list of available audio devices. However, all the devices are listed in the post window when the server is booting: code::Server.default.boot::
+On Windows you strong::cannot:: programmatically obtain the list of available audio devices in sclang. However, all the devices are listed in the post window when the server is booting: code::Server.default.boot::
 
 subsection:: Choosing the device and the API
 list::
