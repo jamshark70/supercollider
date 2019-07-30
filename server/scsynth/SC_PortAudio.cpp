@@ -318,15 +318,23 @@ PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int* device, int ch
 }
 
 PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, IOType ioType) {
+    bool isInput;
+    if (ioType == IOType::Input)
+        isInput = true;
+    else if (ioType == IOType::Output)
+        isInput = false;
+
     if (*device != paNoDevice && sampleRate) {
         // check if device can support requested SR
         PaStreamParameters parameters;
-        if (ioType == IOType::Input) {
+        PaError err = paNoError;
+        if (isInput) {
             parameters = GetPaStreamParameters(device, Pa_GetDeviceInfo(*device)->maxInputChannels, 0);
-        } else if (ioType == IOType::Output) {
+            err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
+        } else {
             parameters = GetPaStreamParameters(device, Pa_GetDeviceInfo(*device)->maxOutputChannels, 0);
+            err = Pa_IsFormatSupported(nullptr, &parameters, sampleRate);
         }
-        PaError err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
         if (err != paNoError) {
             fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
                     Pa_GetErrorText(err), sampleRate, Pa_GetDeviceInfo(*device)->name);
@@ -335,14 +343,14 @@ PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, 
     }
     // in case we still don't have a proper device, use the default device
     if (*device == paNoDevice) {
-        if (ioType == IOType::Input) {
+        if (isInput) {
             *device = Pa_GetDefaultInputDevice();
-        } else if (ioType == IOType::Output) {
+        } else {
             *device = Pa_GetDefaultOutputDevice();
         }
 
         if (*device != paNoDevice)
-            fprintf(stdout, "Selecting default system %s device\n", (ioType == IOType::Input ? "input" : "output"));
+            fprintf(stdout, "Selecting default system %s device\n", (isInput ? "input" : "output"));
     }
     return paNoError;
 }
@@ -351,14 +359,20 @@ void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownD
     if (*matchingDevice == paNoDevice && *knownDevice != paNoDevice) {
         const PaHostApiInfo* apiInfo;
         apiInfo = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*knownDevice)->hostApi);
-        if (matchingDeviceType == IOType::Input) {
+
+        bool isInput;
+        if (matchingDeviceType == IOType::Input)
+            isInput = true;
+        else if (matchingDeviceType == IOType::Output)
+            isInput = false;
+
+        if (isInput) {
             *matchingDevice = apiInfo->defaultInputDevice;
-        } else if (matchingDeviceType == IOType::Output) {
+        } else {
             *matchingDevice = apiInfo->defaultOutputDevice;
         }
         if (*matchingDevice != paNoDevice)
-            fprintf(stdout, "Selecting default %s %s device\n", apiInfo->name,
-                    (matchingDeviceType == IOType::Input ? "input" : "output"));
+            fprintf(stdout, "Selecting default %s %s device\n", apiInfo->name, (isInput ? "input" : "output"));
     }
 }
 
@@ -430,7 +444,7 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
             *inDevice = Pa_GetDefaultInputDevice();
             *outDevice = Pa_GetDefaultOutputDevice();
             if (*inDevice != paNoDevice && *outDevice != paNoDevice)
-                fprintf(stdout, "Selected default system input/output devices\n");
+                fprintf(stdout, "Selecting default system input/output devices\n");
         }
     } else {
         // no inputs nor outputs
