@@ -460,7 +460,6 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
     int mDeviceInOut[2];
     PaError paerror;
     const PaDeviceInfo* pdi;
-    const PaHostApiInfo* apiInfo;
     const PaStreamInfo* psi;
     PaTime suggestedLatencyIn, suggestedLatencyOut;
     PaDeviceIndex numDevices = Pa_GetDeviceCount();
