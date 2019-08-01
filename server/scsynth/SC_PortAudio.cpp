@@ -375,25 +375,19 @@ void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownD
 // it will also try to check for some configuration problems
 // numIns, numOuts and sampleRate are only the requested values, can change later
 PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate) {
-    // make independent checks whether we are using only input, only output, or both input and outputTouched
     if (numIns && !numOuts) {
-        // inputs only
         *outDevice = paNoDevice;
         // check for requested sample rate or select the default device
         return CheckSinglePaDevice(inDevice, sampleRate, IOType::Input);
     } else if (!numIns && numOuts) {
-        // outputs only
         *inDevice = paNoDevice;
         // check for requested sample rate or select the default device
         return CheckSinglePaDevice(outDevice, sampleRate, IOType::Output);
     } else if (numIns && numOuts) {
-        // inputs and outputs
         // if one device is specified, let's try to open another one on matching api
-        // try matching input to output
         SelectMatchingPaDevice(inDevice, outDevice, IOType::Input);
-        // then try matching output to input
         SelectMatchingPaDevice(outDevice, inDevice, IOType::Output);
-        // check if devices are having mismatched API, but only if they are defined
+
         if (*inDevice != paNoDevice && *outDevice != paNoDevice
             && Pa_GetDeviceInfo(*inDevice)->hostApi != Pa_GetDeviceInfo(*outDevice)->hostApi) {
             fprintf(stdout, "Requested devices %s and %s use different API. ", GetPaDeviceName(*inDevice).c_str(),
