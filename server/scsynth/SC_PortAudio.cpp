@@ -89,12 +89,12 @@ public:
                           const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags);
 
 private:
-    void GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType);
-    std::string GetPaDeviceName(int index);
-    PaError CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate);
-    PaError CheckSinglePaDevice(int* device, double sampleRate, IOType ioType);
-    void SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType);
-    PaStreamParameters GetPaStreamParameters(int device, int channelCount, double suggestedLatency);
+    void GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) const;
+    std::string GetPaDeviceName(int index) const;
+    PaError CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate) const;
+    PaError CheckSinglePaDevice(int* device, double sampleRate, IOType ioType) const;
+    void SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType) const;
+    PaStreamParameters GetPaStreamParameters(int device, int channelCount, double suggestedLatency) const;
 };
 
 SC_AudioDriver* SC_NewAudioDriver(struct World* inWorld) { return new SC_PortAudioDriver(inWorld); }
@@ -268,7 +268,7 @@ int SC_PortAudioDriver::PortAudioCallback(const void* input, void* output, unsig
     return paContinue;
 }
 
-std::string SC_PortAudioDriver::GetPaDeviceName(int index) {
+std::string SC_PortAudioDriver::GetPaDeviceName(int index) const {
     auto* pdi = Pa_GetDeviceInfo(index);
     std::string name;
 #ifndef __APPLE__
@@ -279,7 +279,7 @@ std::string SC_PortAudioDriver::GetPaDeviceName(int index) {
     return name;
 }
 
-void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) {
+void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) const {
     if (device[0] == '\0')
         return;
 
@@ -300,7 +300,7 @@ void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IO
     }
 }
 
-PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int device, int channelCount, double suggestedLatency) {
+PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int device, int channelCount, double suggestedLatency) const {
     PaStreamParameters streamParams;
     PaSampleFormat fmt = paFloat32 | paNonInterleaved;
     streamParams.device = device;
@@ -311,7 +311,7 @@ PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int device, int cha
     return streamParams;
 }
 
-PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, IOType ioType) {
+PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, IOType ioType) const {
     bool isInput;
     if (ioType == IOType::Input)
         isInput = true;
@@ -349,7 +349,7 @@ PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, 
     return paNoError;
 }
 
-void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType) {
+void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType) const {
     if (*matchingDevice != paNoDevice || *knownDevice == paNoDevice)
         return;
 
@@ -374,7 +374,7 @@ void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownD
 // this function will select default PA devices if they are not defined
 // it will also try to check for some configuration problems
 // numIns, numOuts and sampleRate are only the requested values, can change later
-PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate) {
+PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate) const {
     if (numIns && !numOuts) {
         *outDevice = paNoDevice;
         // check for requested sample rate or select the default device
