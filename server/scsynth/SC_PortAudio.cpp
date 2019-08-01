@@ -281,21 +281,21 @@ std::string SC_PortAudioDriver::GetPaDeviceName(int index) {
 }
 
 void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) {
+    if (device[0] == '\0')
+        return;
+
     PaDeviceIndex numDevices = Pa_GetDeviceCount();
     *mInOut = paNoDevice;
-
-    if (device[0] != '\0') {
-        for (int i = 0; i < numDevices; i++) {
-            auto* pdi = Pa_GetDeviceInfo(i);
-            std::string devString = GetPaDeviceName(i);
-            if (strstr(devString.c_str(), device)) {
-                if (ioType == IOType::Input && pdi->maxInputChannels > 0) {
-                    *mInOut = i;
-                    break;
-                } else if (ioType == IOType::Output && pdi->maxOutputChannels > 0) {
-                    *mInOut = i;
-                    break;
-                }
+    for (int i = 0; i < numDevices; i++) {
+        auto* pdi = Pa_GetDeviceInfo(i);
+        std::string devString = GetPaDeviceName(i);
+        if (strstr(devString.c_str(), device)) {
+            if (ioType == IOType::Input && pdi->maxInputChannels > 0) {
+                *mInOut = i;
+                break;
+            } else if (ioType == IOType::Output && pdi->maxOutputChannels > 0) {
+                *mInOut = i;
+                break;
             }
         }
     }
@@ -352,24 +352,25 @@ PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, 
 }
 
 void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType) {
-    if (*matchingDevice == paNoDevice && *knownDevice != paNoDevice) {
-        const PaHostApiInfo* apiInfo;
-        apiInfo = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*knownDevice)->hostApi);
+    if (*matchingDevice != paNoDevice || *knownDevice == paNoDevice)
+        return;
 
-        bool isInput;
-        if (matchingDeviceType == IOType::Input)
-            isInput = true;
-        else if (matchingDeviceType == IOType::Output)
-            isInput = false;
+    const PaHostApiInfo* apiInfo;
+    apiInfo = Pa_GetHostApiInfo(Pa_GetDeviceInfo(*knownDevice)->hostApi);
 
-        if (isInput) {
-            *matchingDevice = apiInfo->defaultInputDevice;
-        } else {
-            *matchingDevice = apiInfo->defaultOutputDevice;
-        }
-        if (*matchingDevice != paNoDevice)
-            fprintf(stdout, "Selecting default %s %s device\n", apiInfo->name, (isInput ? "input" : "output"));
+    bool isInput;
+    if (matchingDeviceType == IOType::Input)
+        isInput = true;
+    else if (matchingDeviceType == IOType::Output)
+        isInput = false;
+
+    if (isInput) {
+        *matchingDevice = apiInfo->defaultInputDevice;
+    } else {
+        *matchingDevice = apiInfo->defaultOutputDevice;
     }
+    if (*matchingDevice != paNoDevice)
+        fprintf(stdout, "Selecting default %s %s device\n", apiInfo->name, (isInput ? "input" : "output"));
 }
 
 // this function will select default PA devices if they are not defined
