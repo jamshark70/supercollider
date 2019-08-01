@@ -300,7 +300,8 @@ void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IO
     }
 }
 
-PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int device, int channelCount, double suggestedLatency) const {
+PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int device, int channelCount,
+                                                             double suggestedLatency) const {
     PaStreamParameters streamParams;
     PaSampleFormat fmt = paFloat32 | paNonInterleaved;
     streamParams.device = device;
@@ -349,7 +350,8 @@ PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, 
     return paNoError;
 }
 
-void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType) const {
+void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownDevice,
+                                                IOType matchingDeviceType) const {
     if (*matchingDevice != paNoDevice || *knownDevice == paNoDevice)
         return;
 
@@ -374,7 +376,8 @@ void SC_PortAudioDriver::SelectMatchingPaDevice(int* matchingDevice, int* knownD
 // this function will select default PA devices if they are not defined
 // it will also try to check for some configuration problems
 // numIns, numOuts and sampleRate are only the requested values, can change later
-PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate) const {
+PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts,
+                                           double sampleRate) const {
     if (numIns && !numOuts) {
         *outDevice = paNoDevice;
         // check for requested sample rate or select the default device
