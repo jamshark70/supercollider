@@ -94,7 +94,7 @@ private:
     PaError CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate);
     PaError CheckSinglePaDevice(int* device, double sampleRate, IOType ioType);
     void SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType);
-    PaStreamParameters GetPaStreamParameters(int* device, int channelCount, double suggestedLatency);
+    PaStreamParameters GetPaStreamParameters(int device, int channelCount, double suggestedLatency);
 };
 
 SC_AudioDriver* SC_NewAudioDriver(struct World* inWorld) { return new SC_PortAudioDriver(inWorld); }
@@ -301,14 +301,13 @@ void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IO
     }
 }
 
-PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int* device, int channelCount, double suggestedLatency) {
+PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int device, int channelCount, double suggestedLatency) {
     PaStreamParameters streamParams;
     PaSampleFormat fmt = paFloat32 | paNonInterleaved;
-    streamParams.device = *device;
+    streamParams.device = device;
     streamParams.channelCount = channelCount;
     streamParams.sampleFormat = fmt;
-    if (suggestedLatency)
-        streamParams.suggestedLatency = suggestedLatency;
+    streamParams.suggestedLatency = suggestedLatency;
     streamParams.hostApiSpecificStreamInfo = nullptr;
     return streamParams;
 }
@@ -325,10 +324,10 @@ PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, 
         PaStreamParameters parameters;
         PaError err = paNoError;
         if (isInput) {
-            parameters = GetPaStreamParameters(device, Pa_GetDeviceInfo(*device)->maxInputChannels, 0);
+            parameters = GetPaStreamParameters(*device, Pa_GetDeviceInfo(*device)->maxInputChannels, 0);
             err = Pa_IsFormatSupported(&parameters, nullptr, sampleRate);
         } else {
-            parameters = GetPaStreamParameters(device, Pa_GetDeviceInfo(*device)->maxOutputChannels, 0);
+            parameters = GetPaStreamParameters(*device, Pa_GetDeviceInfo(*device)->maxOutputChannels, 0);
             err = Pa_IsFormatSupported(nullptr, &parameters, sampleRate);
         }
         if (err != paNoError) {
@@ -406,8 +405,8 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
         // check for matching sampleRate or requested sample rate
         if (*inDevice != paNoDevice && *outDevice != paNoDevice) {
             PaStreamParameters in_parameters, out_parameters;
-            in_parameters = GetPaStreamParameters(inDevice, Pa_GetDeviceInfo(*inDevice)->maxInputChannels, 0);
-            out_parameters = GetPaStreamParameters(outDevice, Pa_GetDeviceInfo(*outDevice)->maxOutputChannels, 0);
+            in_parameters = GetPaStreamParameters(*inDevice, Pa_GetDeviceInfo(*inDevice)->maxInputChannels, 0);
+            out_parameters = GetPaStreamParameters(*outDevice, Pa_GetDeviceInfo(*outDevice)->maxOutputChannels, 0);
             if (sampleRate) {
                 // check if devices can support requested SR
                 PaError err = Pa_IsFormatSupported(&in_parameters, &out_parameters, sampleRate);
