@@ -269,16 +269,14 @@ int SC_PortAudioDriver::PortAudioCallback(const void* input, void* output, unsig
 }
 
 std::string SC_PortAudioDriver::GetPaDeviceName(int index) {
-    const PaDeviceInfo* pdi;
-    pdi = Pa_GetDeviceInfo(index);
+    const PaDeviceInfo* pdi = Pa_GetDeviceInfo(index);
     std::string name;
 #ifndef __APPLE__
-    const PaHostApiInfo* apiInfo;
-    apiInfo = Pa_GetHostApiInfo(pdi->hostApi);
-    name.append(apiInfo->name);
-    name.append(" : ");
+    apiInfo = ;
+    name += Pa_GetHostApiInfo(pdi->hostApi)->name;
+    name += " : ";
 #endif
-    name.append(pdi->name);
+    name += pdi->name;
     return name;
 }
 
