@@ -269,10 +269,9 @@ int SC_PortAudioDriver::PortAudioCallback(const void* input, void* output, unsig
 }
 
 std::string SC_PortAudioDriver::GetPaDeviceName(int index) {
-    const PaDeviceInfo* pdi = Pa_GetDeviceInfo(index);
+    auto* pdi = Pa_GetDeviceInfo(index);
     std::string name;
 #ifndef __APPLE__
-    apiInfo = ;
     name += Pa_GetHostApiInfo(pdi->hostApi)->name;
     name += " : ";
 #endif
@@ -404,9 +403,10 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
         }
         // check for matching sampleRate or requested sample rate
         if (*inDevice != paNoDevice && *outDevice != paNoDevice) {
-            PaStreamParameters in_parameters, out_parameters;
-            in_parameters = GetPaStreamParameters(*inDevice, Pa_GetDeviceInfo(*inDevice)->maxInputChannels, 0);
-            out_parameters = GetPaStreamParameters(*outDevice, Pa_GetDeviceInfo(*outDevice)->maxOutputChannels, 0);
+            const auto in_parameters =
+                GetPaStreamParameters(*inDevice, Pa_GetDeviceInfo(*inDevice)->maxInputChannels, 0);
+            const auto out_parameters =
+                GetPaStreamParameters(*outDevice, Pa_GetDeviceInfo(*outDevice)->maxOutputChannels, 0);
             if (sampleRate) {
                 // check if devices can support requested SR
                 PaError err = Pa_IsFormatSupported(&in_parameters, &out_parameters, sampleRate);
