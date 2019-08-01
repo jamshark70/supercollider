@@ -281,16 +281,14 @@ std::string SC_PortAudioDriver::GetPaDeviceName(int index) {
 }
 
 void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) {
-    const PaDeviceInfo* pdi;
     PaDeviceIndex numDevices = Pa_GetDeviceCount();
     *mInOut = paNoDevice;
 
-    if (device) {
+    if (device[0] != '\0') {
         for (int i = 0; i < numDevices; i++) {
-            pdi = Pa_GetDeviceInfo(i);
+            auto* pdi = Pa_GetDeviceInfo(i);
             std::string devString = GetPaDeviceName(i);
-            // compare strings, but only if the string is not empty
-            if (strstr(devString.c_str(), device) && device[0]) {
+            if (strstr(devString.c_str(), device)) {
                 if (ioType == IOType::Input && pdi->maxInputChannels > 0) {
                     *mInOut = i;
                     break;
