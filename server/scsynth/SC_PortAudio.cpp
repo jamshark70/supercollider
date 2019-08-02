@@ -96,7 +96,7 @@ private:
     PaError CheckSinglePaDevice(int* device, double sampleRate, int maxChannels, int defaultDevice,
                                 SupportCheck isSupportedFunc, const char* deviceType) const;
     void SelectMatchingPaDevice(int* matchingDevice, int* knownDevice, IOType matchingDeviceType) const;
-    PaStreamParameters GetPaStreamParameters(int device, int channelCount, double suggestedLatency) const;
+    PaStreamParameters MakePaStreamParameters(int device, int channelCount, double suggestedLatency) const;
 };
 
 SC_AudioDriver* SC_NewAudioDriver(struct World* inWorld) { return new SC_PortAudioDriver(inWorld); }
@@ -301,7 +301,7 @@ PaDeviceIndex SC_PortAudioDriver::GetPaDeviceFromName(const char* device, IOType
     return paNoDevice;
 }
 
-PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int device, int channelCount,
+PaStreamParameters SC_PortAudioDriver::MakePaStreamParameters(int device, int channelCount,
                                                              double suggestedLatency) const {
     PaStreamParameters streamParams;
     PaSampleFormat fmt = paFloat32 | paNonInterleaved;
@@ -318,7 +318,7 @@ PaError SC_PortAudioDriver::CheckSinglePaDevice(int* device, double sampleRate, 
                                                 SupportCheck isSupportedFunc, const char* deviceType) const {
     if (*device != paNoDevice && sampleRate) {
         // check if device can support requested SR
-        PaStreamParameters parameters = GetPaStreamParameters(*device, maxChannels, 0);
+        PaStreamParameters parameters = MakePaStreamParameters(*device, maxChannels, 0);
         PaError err = isSupportedFunc(parameters, sampleRate);
         if (err != paNoError) {
             fprintf(stdout, "PortAudio error: %s\nRequested sample rate %f for device %s is not supported\n",
@@ -392,9 +392,9 @@ PaError SC_PortAudioDriver::CheckPaDevices(int* inDevice, int* outDevice, int nu
         // check for matching sampleRate or requested sample rate
         if (*inDevice != paNoDevice && *outDevice != paNoDevice) {
             const auto in_parameters =
-                GetPaStreamParameters(*inDevice, Pa_GetDeviceInfo(*inDevice)->maxInputChannels, 0);
+                MakePaStreamParameters(*inDevice, Pa_GetDeviceInfo(*inDevice)->maxInputChannels, 0);
             const auto out_parameters =
-                GetPaStreamParameters(*outDevice, Pa_GetDeviceInfo(*outDevice)->maxOutputChannels, 0);
+                MakePaStreamParameters(*outDevice, Pa_GetDeviceInfo(*outDevice)->maxOutputChannels, 0);
             if (sampleRate) {
                 // check if devices can support requested SR
                 PaError err = Pa_IsFormatSupported(&in_parameters, &out_parameters, sampleRate);
