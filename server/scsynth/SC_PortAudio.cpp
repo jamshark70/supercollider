@@ -89,7 +89,7 @@ public:
                           const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags);
 
 private:
-    void GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) const;
+    PaDeviceIndex GetPaDeviceFromName(const char* device, IOType ioType) const;
     std::string GetPaDeviceName(int index) const;
     PaError CheckPaDevices(int* inDevice, int* outDevice, int numIns, int numOuts, double sampleRate) const;
     template <typename SupportCheck> // expected signature: PaError (*)(PaStreamParameters&, double)
@@ -281,25 +281,24 @@ std::string SC_PortAudioDriver::GetPaDeviceName(int index) const {
     return name;
 }
 
-void SC_PortAudioDriver::GetPaDeviceFromName(const char* device, int* mInOut, IOType ioType) const {
-    if (device[0] == '\0')
-        return;
+PaDeviceIndex SC_PortAudioDriver::GetPaDeviceFromName(const char* device, IOType ioType) const {
+    if (device == nullptr || device[0] == '\0')
+        return paNoDevice;
 
     PaDeviceIndex numDevices = Pa_GetDeviceCount();
-    *mInOut = paNoDevice;
     for (int i = 0; i < numDevices; i++) {
         auto* pdi = Pa_GetDeviceInfo(i);
         std::string devString = GetPaDeviceName(i);
         if (strstr(devString.c_str(), device)) {
             if (ioType == IOType::Input && pdi->maxInputChannels > 0) {
-                *mInOut = i;
-                break;
+                return i;
             } else if (ioType == IOType::Output && pdi->maxOutputChannels > 0) {
-                *mInOut = i;
-                break;
+                return i;
             }
         }
     }
+
+    return paNoDevice;
 }
 
 PaStreamParameters SC_PortAudioDriver::GetPaStreamParameters(int device, int channelCount,
@@ -457,12 +456,8 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
                 pdi->maxInputChannels, pdi->maxOutputChannels);
     }
 
-    mDeviceInOut[0] = paNoDevice;
-    mDeviceInOut[1] = paNoDevice;
-    if (mWorld->hw->mInDeviceName)
-        GetPaDeviceFromName(mWorld->hw->mInDeviceName, &mDeviceInOut[0], IOType::Input);
-    if (mWorld->hw->mOutDeviceName)
-        GetPaDeviceFromName(mWorld->hw->mOutDeviceName, &mDeviceInOut[1], IOType::Output);
+    mDeviceInOut[0] = GetPaDeviceFromName(mWorld->hw->mInDeviceName, IOType::Input);
+    mDeviceInOut[1] = GetPaDeviceFromName(mWorld->hw->mOutDeviceName, IOType::Output);
 
     // report requested devices
     fprintf(stdout, "\nRequested devices:\n");
