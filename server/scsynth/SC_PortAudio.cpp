@@ -474,12 +474,12 @@ bool SC_PortAudioDriver::DriverSetup(int* outNumSamples, double* outSampleRate) 
     *outNumSamples = mWorld->mBufLength;
     if (mPreferredSampleRate)
         *outSampleRate = mPreferredSampleRate;
-    else {
-        if (mDeviceInOut[0] != paNoDevice)
-            *outSampleRate = Pa_GetDeviceInfo(mDeviceInOut[0])->defaultSampleRate;
-        if (mDeviceInOut[1] != paNoDevice)
-            *outSampleRate = Pa_GetDeviceInfo(mDeviceInOut[1])->defaultSampleRate;
-    }
+    else if (mDeviceInOut[1] != paNoDevice)
+        *outSampleRate = Pa_GetDeviceInfo(mDeviceInOut[1])->defaultSampleRate;
+    else if (mDeviceInOut[0] != paNoDevice)
+        *outSampleRate = Pa_GetDeviceInfo(mDeviceInOut[0])->defaultSampleRate;
+    else
+        *outSampleRate = 44100.;
 
 
     if (mDeviceInOut[0] != paNoDevice || mDeviceInOut[1] != paNoDevice) {
