@@ -11,7 +11,7 @@ note::
 Device selection won't take effect until the server is (re)booted.
 ::
 
-section:: macOS
+section:: MacOS
 
 By default the server will boot to your system's default audio devices. If you want to explicitly tell the server to use the internal soundcard, you need to specify both input and output device. The following example comes from a MacBook Pro:
 code::
@@ -19,12 +19,12 @@ Server.default.options.inDevice_("Built-in Microph");
 Server.default.options.outDevice_("Built-in Output");
 ::
 
-In case of a dedicated audio interfaces, you might need to specify a single device, e.g.
+In case of a dedicated audio interface, you might need to specify a single device, e.g.
 code::
 Server.default.options.device_("MOTU 828");
 ::
 
-On macOS you can programmatically obtain list of available audio devices without booting the server:
+On MacOS you can programmatically obtain a list of available audio devices without booting the server:
 code::
 ServerOptions.devices; //all devices
 ServerOptions.inDevices; //input devices
@@ -33,7 +33,7 @@ ServerOptions.outDevices; //output devices
 
 subsection:: Sample rate mismatch
 
-One of the reasons for the server's failure to boot is the mismatch between input and output devices' sample rate. This is a possibility when using a different device for input and output (which is the case when using the internal soundcard). If the server fails to boot due to sample rate mismatch, an error will be posted accordingly.
+One possible reason why a server may fail to boot is a mismatch between input and output devices' sample rates, which may occur when using a different device for input and output (which is the case when using a Mac's internal soundcard). If the server fails to boot due to sample rate mismatch, an error will be posted accordingly.
 
 You should set both input and output devices' sample rate to the same value. You can do this in Audio MIDI Setup:
 code::
@@ -42,21 +42,21 @@ code::
 
 subsection:: Aggregate device
 
-Sometimes you might want to use multiple devices for input or output. In such case, macOS provides a functionality to combine multiple physical devices into one called an teletype::Aggregate Device::. To create one, you have to open the Audio MIDI Setup application (in /Applications/Utilities). You should do this from an user account with administrator privileges.
+Sometimes you might want to use multiple devices for input or output. MacOS provides a way to combine multiple physical devices into a virtual emphasis::Aggregate Device::. To create one, you have to open the Audio MIDI Setup application (in teletype::/Applications/Utilities::). You should do this from an user account with administrator privileges.
 code::
 "open -a 'Audio MIDI Setup'".unixCmd; // execute this to launch it
 ::
 LIST::
-##In the teletype::Audio Devices:: window click on the Plus button on the bottom left and choose teletype::Create Aggregate Device::.
-##You can change its name to something specific if desired, for example "InternalAndMOTU".
-##Check the Use column on the right for the devices you want to combine.
+## In the teletype::Audio Devices:: window click on the Plus button on the bottom left and choose teletype::Create Aggregate Device::.
+## You can change its name to something specific if desired, for example "InternalAndMOTU".
+## Check the teletype::Use:: column on the right for the devices you want to combine.
 ::
 Now you need to tell SuperCollider to use your new aggregate device.
 code::
 Server.default.options.device = "Aggregate Device"; //or the name you have specified in the previous step
 ::
 
-After (re)booting the server (code::Server.default.reboot::) you should see in the post window that it now uses the Aggregate Device instead of system defaults:
+After rebooting the server (code::Server.default.reboot::) you should see in the post window that it now uses the Aggregate Device instead of system defaults:
 teletype::
 [...]
 "Aggregate Device" Input Device
@@ -69,12 +69,12 @@ Note that when you specify a sound device through SuperCollider's code::ServerOp
 
 section:: Linux
 
-By default SuperCollider on Linux uses JACK, and the audio device selection is managed by the JACK server. teletype::ServerOptions:: cannot override JACK's selection of audio hardware.
+By default, SuperCollider on Linux uses JACK, and the audio device selection is managed by the JACK server. teletype::ServerOptions:: cannot override JACK's selection of audio hardware.
 
 subsection:: Setup with JACK server
-note::The SuperCollider server is considered a JACK emphasis::client::. In the following paragraph the term emphasis::client:: will refer to SuperCollider server, from the perspective of JACK. ::
+note::The SuperCollider server is considered a JACK emphasis::client::. In the following section, the term emphasis::client:: will refer to the SuperCollider server, from the perspective of JACK. ::
 
-When the server is compiled to use JACK as audio backend, the code::ServerOption::'s teletype::device:: can be used in two ways:
+When the server is compiled to use JACK as the audio backend, the code::ServerOption::'s teletype::device:: can be used in two ways:
 list::
 ## to set the client name to register with JACK:
 code::
@@ -109,7 +109,7 @@ o.inDevice_("Windows WASAPI : Microphone");
 o.outDevice_("Windows WASAPI : Speakers");
 Server.default.reboot;
 ::
-On Windows you strong::cannot:: programmatically obtain the list of available audio devices in sclang. However, all the devices are listed in the post window when the server is booting: code::Server.default.boot::
+On Windows you strong::cannot:: programmatically obtain the list of available audio devices in sclang. However, all the devices are listed in the post window when the server is booting: code::Server.default.boot::. Partial device name matching is supported in Windows (though not in MacOS).
 
 subsection:: Choosing the device and the API
 list::
@@ -145,7 +145,7 @@ LIST::
 ## strong::Multichannel operation: :: Usually no
 ## strong::Typical latency: :: Low
 ## strong::Caveats: :: On some systems SuperCollider will prevent other applications from using the audio device when using this API
-## strong::More info: :: WDM-KS stands for Windows Driver Model Kernel Streaming, it was the first native Windows API providing reasonably low latency
+## strong::More info: :: WDM-KS stands for Windows Driver Model Kernel Streaming. It was the first native Windows API providing reasonably low latency
 ::
 ## DirectSound
 ||
