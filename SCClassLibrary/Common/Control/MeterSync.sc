@@ -1,8 +1,11 @@
+// TODO: init needs to query for existing IDs and order
+
 // originally conceived for LinkClock (Ableton Link support)
 // but this may in theory apply to any clock that answers to
 // baseBarBeat_ (e.g. MIDISyncClocks, or BeaconClock)
 
 MeterSync {
+	classvar ids;  // to know the order of MeterSyncs coming online
 	var <clock, <id, <ports;
 	var <repeats = 4, <delta = 0.01, lastReceived;
 	var addrs, meterChangeResp, meterQueryResp;
@@ -12,6 +15,32 @@ MeterSync {
 	// but the watcher may need to change baseBarBeat internally.
 	// this should not broadcast. flag is off in that case
 	var broadcastMeter = true;
+
+	*initClass {
+		StartUp.add {
+			var remove = { |id|
+				ids.removeAllSuchThat(_ == id);
+			};
+			var lastReceived;  // redundancy killer
+			ids = Array.new;
+			OSCFunc({ |msg|
+				if(msg != lastReceived) {
+					msg.debug;
+					remove.value(msg[1]);
+					ids = ids.add(msg[1]).debug("add id");  // latest id comes in at the end
+					lastReceived = msg;
+				};
+			}, '/SC_LinkClock/addId').fix;
+			OSCFunc({ |msg|
+				if(msg != lastReceived) {
+					msg.debug;
+					remove.value(msg[1]);
+					ids.debug("removed id");
+					lastReceived = msg;
+				};
+			}, '/SC_LinkClock/removeId').fix;
+		}
+	}
 
 	*new { |clock, id, ports|
 		^super.new.init(clock, id, ports)
@@ -28,18 +57,22 @@ MeterSync {
 			// because of redundancy ('repeats'), we may receive this message
 			// multiple times. Respond only once.
 			if(msg != lastReceived) {
+				msg.debug;
 				lastReceived = msg;
 				this.prBroadcast(
 					'/SC_LinkClock/meterReply', id, msg[1], this.enabled.asInteger,
-					clock.beats, clock.beatsPerBar, clock.baseBarBeat, clock.beatInBar
+					clock.beats, clock.beatsPerBar, clock.baseBarBeat, clock.beatInBar,
+					*ids
 				);
 			};
 		}, '/SC_LinkClock/queryMeter');
 		clock.addDependant(this);
 		this.enabled = true;  // assume enabled when creating
+		this.prBroadcast('/SC_LinkClock/addId', id.debug("MeterSync id created"));
 	}
 
 	free {
+		this.prBroadcast('/SC_LinkClock/removeId', id);
 		clock.removeDependant(this);
 		meterQueryResp.free;
 		meterChangeResp.free;
@@ -48,30 +81,17 @@ MeterSync {
 	enabled { ^meterChangeResp.notNil }
 
 	enabled_ { |bool|
-		var watcher, foundPeers = false;
 		if(bool) {
 			if(clock.numPeers == 0) {
-				// if there are peers, then we get a \numPeers notification
-				watcher = SimpleController(clock)
-				.put(\numPeers, { |... args|
-					watcher.remove;
-					foundPeers = true;
-					this.resyncMeter(verbose: clock.numPeers > 0)
-				})
-				.put(\stop, { watcher.remove });
 				SystemClock.sched(0.25, {
-					if(foundPeers.not) {
-						watcher.remove;
-						// some clocks other than Link might not broadcast numPeers
-						// but they might have peers anyway. If not, this is a no-op
-						this.resyncMeter(verbose: clock.numPeers > 0);
-					};
+					this.resyncMeter(verbose: clock.numPeers > 0);
 				});
 			} {
 				this.resyncMeter;
 			};
 			meterChangeResp = OSCFunc({ |msg|
 				if(msg[1] != id and: { msg != lastReceived }) {  // ignore message that I sent
+					msg.debug;
 					lastReceived = msg;
 					// [2] = beatsPerBar, [3] = remote clock's real time, [4] = remote clock's barline
 					// also, 5/8 means maybe setting the barline to a half-beat
@@ -124,6 +144,7 @@ MeterSync {
 			// Dictionary already collapses replies per id
 			resp = OSCFunc({ |msg, time, addr|
 				if(msg[1] != id) {
+					msg.debug;
 					replies.put(msg[1], (
 						id: msg[1],
 						queriedAtBeat: msg[2],
@@ -131,7 +152,8 @@ MeterSync {
 						beats: msg[4],
 						beatsPerBar: msg[5],
 						baseBarBeat: msg[6],
-						beatInBar: msg[7]
+						beatInBar: msg[7],
+						ids: msg[8..]
 					));
 				};
 			}, '/SC_LinkClock/meterReply');
@@ -151,6 +173,7 @@ MeterSync {
 
 	resyncMeter { |round, verbose = true|
 		var replies, cond = Condition.new, newBeatsPerBar, newBase;
+		var idFold, idSet;
 		fork {
 			// queryMeter should never hang (based on default timeout)
 			this.queryMeter { |val|
@@ -160,6 +183,16 @@ MeterSync {
 			cond.hang;
 			replies = replies.select { |reply| reply[\syncMeter] };
 			if(replies.size > 0) {
+				// recovery: if I crashed and I'm rejoining, I don't know others' IDs
+				// but the replies will pass it over
+				idFold = replies.collectAs(_[\ids], Array).debug("reply ids").flop.flat;
+				idSet = Set.new;
+				idFold = idFold.select { |item|
+					var keep = idSet.includes(item).not;
+					idSet.add(item);
+					keep
+				};
+				if(ids.debug("old ids").size < idFold.debug("idFold").size) { ids = idFold };
 				#newBeatsPerBar, newBase = this.prGetMeter(replies, round);
 				if(verbose and: { newBeatsPerBar != clock.beatsPerBar }) {
 					"syncing meter to %, base = %\n".postf(newBeatsPerBar, newBase)
@@ -217,35 +250,21 @@ MeterSync {
 	}
 
 	prGetMeter { |replies, round|
-		var bpbs, baseBeats, denom, newBeatsPerBar, newBase;
-		bpbs = Set.new;
-		baseBeats = Set.new;
-		denom = 1;
-		replies.do { |reply|
-			denom = lcm(denom, reply[\baseBarBeat].asFraction[1]);
-			bpbs.add(reply[\beatsPerBar]);
-			baseBeats.add(reply[\queriedAtBeat] - reply[\beatInBar]);
-		};
-		if(round.isNil) { round = denom.reciprocal };
-		// All 'syncMeter' peers should have the same beatsPerBar (size == 1).
-		// But, if something failed, maybe there are more.
-		if(bpbs.size == 1) {
-			// 'pop' = easy way to get one item from an unordered collection
-			newBeatsPerBar = bpbs.pop;
-			// Collapse remote baseBeats to minimum size
-			baseBeats = baseBeats.collect { |x| x.round(round) % newBeatsPerBar };
-			if(baseBeats.size == 1) {
-				// 'baseBeats.add()' above has calculated baseBarBeat
-				// such that my local beatInBar will match theirs
-				newBase = baseBeats.pop;
-			} {
-				// this should not happen
-				Error("LinkClock peers disagree on barline positions; cannot sync barlines").throw;
-			};
+		var lookup = IdentityDictionary.new, reply, denom;
+		ids.do { |id, i| lookup[id] = i };
+		reply = replies.select { |reply| reply[\syncMeter] }
+		.minItem { |reply| lookup[reply[\id]] };
+		// .sort { |a, b| lookup[a[\id]] < lookup[b[\id]] }
+		// .at(0);
+		if(reply.notNil) {
+			denom = reply[\beatsPerBar].asFraction[1].reciprocal;
+			^[
+				reply[\beatsPerBar],
+				(reply[\queriedAtBeat] - reply[\beatInBar]).round(denom) % reply[\beatsPerBar]
+			]
 		} {
-			Error("LinkClock peers disagree on beatsPerBar; cannot sync barlines").throw;
-		};
-		^[newBeatsPerBar, newBase]
+			^[clock.beatsPerBar, clock.baseBarBeat]
+		}
 	}
 
 	clock_ { ^this.shouldNotImplement(thisMethod) }
