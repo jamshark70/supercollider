@@ -377,12 +377,13 @@ MIDIIn {
 
 MIDIOut {
 	var <>port, <>uid, <>latency = 0.2;
+	var noteCount;
 
 	*new { arg port, uid;
 		if(thisProcess.platform.name != \linux) {
-			^super.newCopyArgs(port, uid ?? { MIDIClient.destinations[port].uid });
+			^super.newCopyArgs(port, uid ?? { MIDIClient.destinations[port].uid }).init;
 		} {
-			^super.newCopyArgs(port, uid ?? 0 );
+			^super.newCopyArgs(port, uid ?? 0 ).init;
 		}
 	}
 	*newByName { arg deviceName, portName, dieIfNotFound = true;
@@ -423,15 +424,32 @@ MIDIOut {
 		};
 	}
 
+	init {
+		// channel --> note array
+		// Unlikely to have 128 simultaneous note-ons for the same note number
+		// so, save some space
+		noteCount = Array.fill(16, { Int8Array.fill(128, 0) });
+	}
+
 	write { arg len, hiStatus, loStatus, a=0, b=0;
 		this.send(port, uid, len, hiStatus, loStatus, a, b, latency);
 	}
 
 	noteOn { arg chan, note=60, veloc=64;
+		noteCount[chan][note] = noteCount[chan][note] + 1;
 		this.write(3, 16r90, chan.asInteger, note.asInteger, veloc.asInteger);
 	}
 	noteOff { arg chan, note=60, veloc=64;
+		noteCount[chan][note] = noteCount[chan][note] - 1;
 		this.write(3, 16r80, chan.asInteger, note.asInteger, veloc.asInteger);
+	}
+	noteOffLegato { arg chan, note=60, veloc=64;
+		if(noteCount[chan][note] <= 1) {
+			this.noteOff(chan, note, veloc)
+		} {
+			// a note-off has been issued, so we do have to drop the count
+			noteCount[chan][note] = noteCount[chan][note] - 1;
+		}
 	}
 	polyTouch { arg chan, note=60, val=64;
 		this.write(3, 16rA0, chan.asInteger, note.asInteger, val.asInteger);

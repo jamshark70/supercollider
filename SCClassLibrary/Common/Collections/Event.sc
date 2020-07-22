@@ -362,6 +362,8 @@ Event : Environment {
 						[chan, midinote, asInteger((amp * 127).clip(0, 127)) ] },
 					noteOff: #{ arg chan=0, midinote=60, amp=0.1;
 						[ chan, midinote, asInteger((amp * 127).clip(0, 127)) ] },
+					noteOffLegato: #{ arg chan=0, midinote=60, amp=0.1;
+						[ chan, midinote, asInteger((amp * 127).clip(0, 127)) ] },
 					polyTouch: #{ arg chan=0, midinote=60, polyTouch=125;
 						[ chan, midinote, polyTouch ] },
 					control: #{ arg chan=0, ctlNum, control=125;
@@ -822,7 +824,7 @@ Event : Environment {
 							};
 							if(hasGate and: { midicmd === \noteOn }) {
 								thisThread.clock.sched(sustain + latency, {
-									midiout.noteOff(*msgArgs)
+									midiout.noteOffLegato(*msgArgs)
 								});
 							};
 						};
