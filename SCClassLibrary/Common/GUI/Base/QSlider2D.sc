@@ -74,4 +74,6 @@ Slider2D : QAbstractStepValue {
 		var pt = View.currentDrag;
 		this.setXYActive( pt.x, pt.y );
 	}
+
+	getValue { ^Point(this.x, this.y) }
 }

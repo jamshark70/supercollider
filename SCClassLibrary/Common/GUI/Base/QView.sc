@@ -28,6 +28,8 @@ View : QObject {
 	// hooks
 	var <onClose, <onResize, <onMove;
 
+	// in this POC, not following value_ yet
+	var <>currentValue;
 
 	*initClass {
 		hSizePolicy = [1,2,3,1,2,3,1,2,3];
@@ -495,6 +497,11 @@ View : QObject {
 	doAction {
 		action.value(this);
 	}
+	updateCurrentValue {
+		currentValue = this.getValue;
+		this.changed(\value, currentValue);
+	}
+	getValue { ^this.value }  // specific views can override
 
 	defaultKeyDownAction { arg char, modifiers, unicode, keycode, key; }
 
@@ -567,6 +574,10 @@ View : QObject {
 			if( parent.decorator.notNil ) { parent.decorator.place(this) }
 		};
 
+		// always on, for dependant notification
+		// some QObjects don't support action()
+		try { this.manageMethodConnection( nil, \dependants, 'action()', \updateCurrentValue ) };
+		this.updateCurrentValue;
 		this.setEventHandler( QObject.closeEvent, \onCloseEvent, true );
 
 		// key events
