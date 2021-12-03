@@ -271,6 +271,30 @@ SynthDef {
 			});
 	}
 
+	controlChannelForName { |name|
+		var thing = this.allControlNames.detect { |cname|
+			cname.name == name
+		};
+		var ctlIndex, rate, matchClass;
+		if(thing.isNil) { ^nil };
+		ctlIndex = thing.index;
+		rate = thing.rate;
+		if(rate == \audio) {
+			matchClass = AudioControl
+		} {
+			matchClass = Control
+		};
+		thing = this.children.detect { |ugen|
+			ugen.isKindOf(matchClass) and: {
+				ctlIndex >= ugen.specialIndex and: {
+					ctlIndex < (ugen.specialIndex + ugen.channels.size)
+				}
+			}
+		};
+		if(thing.isNil) { ^nil };
+		^thing.channels[ctlIndex - thing.specialIndex]
+	}
+
 	finishBuild {
 		this.addCopiesIfNeeded;
 		this.optimizeGraph;

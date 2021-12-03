@@ -8,7 +8,7 @@ ProxySynthDef : SynthDef {
 	*new { | name, func, rates, prependArgs, makeFadeEnv = true, channelOffset = 0,
 		chanConstraint, rateConstraint |
 		var def, rate, numChannels, output, isScalar, envgen, canFree, hasOwnGate;
-		var hasGateArg=false, hasOutArg=false;
+		var hasGateArg=false, hasOutArg=false, gateArg, outArg;
 		var outerBuildSynthDef = UGen.buildSynthDef;
 		def = super.new(name, {
 			var  out, outCtl;
@@ -42,16 +42,11 @@ ProxySynthDef : SynthDef {
 			isScalar = rate === 'scalar';
 
 			// check for out key. this is used by internal control.
-			func.def.argNames.do { arg name;
-				if(name === \out) { hasOutArg = true };
-				if(name === \gate) { hasGateArg = true };
-			};
+			outArg = UGen.buildSynthDef.controlChannelForName(\out);
+			hasOutArg = outArg.notNil;
 
-			if(isScalar.not and: hasOutArg)
-			{
-				"out argument is provided internally!".error; // avoid overriding generated out
-				^nil
-			};
+			gateArg = UGen.buildSynthDef.controlChannelForName(\gate);
+			hasGateArg = gateArg.notNil;
 
 			// rate is only scalar if output was nil or if it was directly produced by an out ugen
 			// this allows us to conveniently write constant numbers to a bus from the synth
@@ -124,7 +119,7 @@ ProxySynthDef : SynthDef {
 						}
 					}
 				};
-				outCtl = Control.names(\out).ir(0) + channelOffset;
+				outCtl = outArg ?? { Control.names(\out).ir(0) } + channelOffset;
 				(if(rate === \audio and: { sampleAccurate }) { OffsetOut } { Out }).multiNewList([rate, outCtl] ++ output)
 			})
 		});
