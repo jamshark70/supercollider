@@ -20,17 +20,23 @@ section::Common parameters
 subsection::Timing control
 
 definitionList::
-## \delta || Number of strong::beats:: until the next event. Calculated from code::~dur * ~stretch::, if code::\delta:: is not given explicitly.
-## \lag || Number of strong::seconds:: to delay the event's server message(s).
-## \timingOffset || Number of strong::beats:: to delay the event's server message(s). In conjunction with link::Classes/Quant::, this allows control over the order of event preparation between different patterns in the client, without desynchronizing sonic events that should play together. link::Tutorials/A-Practical-Guide/PG_06g_Data_Sharing:: has an example of its use to pass data from a bass pattern to a chord pattern.
+## keyword:: delta
+delta || Number of strong::beats:: until the next event. Calculated from code::~dur * ~stretch::, if code::\delta:: is not given explicitly.
+## keyword:: lag
+lag || Number of strong::seconds:: to delay the event's server message(s).
+## keyword:: timingOffset
+timingOffset || Number of strong::beats:: to delay the event's server message(s). In conjunction with link::Classes/Quant::, this allows control over the order of event preparation between different patterns in the client, without desynchronizing sonic events that should play together. link::Tutorials/A-Practical-Guide/PG_06g_Data_Sharing:: has an example of its use to pass data from a bass pattern to a chord pattern.
 
-## \sustain || Number of beats to wait before releasing a Synth node on the server. The SynthDef must have a code::gate:: argument for the explicit release to be sent; otherwise, the pattern assumes the note will release itself using a timed envelope. code::\sustain:: is calculated from code::~dur * ~legato * ~stretch:: if not given directly.
+## keyword:: sustain
+sustain || Number of beats to wait before releasing a Synth node on the server. The SynthDef must have a code::gate:: argument for the explicit release to be sent; otherwise, the pattern assumes the note will release itself using a timed envelope. code::\sustain:: is calculated from code::~dur * ~legato * ~stretch:: if not given directly.
 
-## \sendGate || The default behavior for releasing a note is to look in the link::Classes/SynthDesc:: for an argument called \gate. If it's present, the event will send a code::node.set(\gate, 0):: message to the server. If not, no release will be sent; it's assumed that the SynthDef will release itself after a given length of time. code::\sendGate:: overrides this behavior: code::true:: means to force the release message to be sent, whether or not the argument exists, while code::false:: means to suppress the release message.
+## keyword:: sendGate
+sendGate || The default behavior for releasing a note is to look in the link::Classes/SynthDesc:: for an argument called \gate. If it's present, the event will send a code::node.set(\gate, 0):: message to the server. If not, no release will be sent; it's assumed that the SynthDef will release itself after a given length of time. code::\sendGate:: overrides this behavior: code::true:: means to force the release message to be sent, whether or not the argument exists, while code::false:: means to suppress the release message.
 
 It isn't typical use to override; nonetheless, for some special cases, it may be useful.
 
-## \tempo || Optional. If a value is given (in beats per second), it will change the tempo of the TempoClock playing the pattern. Here, the note duration is constant but the clock's speed changes.
+## keyword:: tempo
+tempo || Optional. If a value is given (in beats per second), it will change the tempo of the TempoClock playing the pattern. Here, the note duration is constant but the clock's speed changes.
 
 note::Changing the tempo will affect all patterns playing on the same clock.::
 
@@ -47,19 +53,27 @@ Pbind(
 subsection::Node control
 
 definitionList::
-## \addAction || How to add a synth or group node relative to the given code::\group:: in the event. See link::Classes/Synth::.
-## \amp || Not formally defined as a special parameter, but this is typically used for Synth amplitude. The SynthDef should have an code::amp:: argument and use it to control volume. code::\amp:: is optionally calculated from code::\db::.
-## \id || The desired id(s) for newly created Nodes in this event. Normally this is code::nil::, in which case the IDs will be obtained from code::server.nextNodeID::.
-## \instrument || The link::Classes/SynthDef:: name for which nodes will be created. Only one name should be given (unlike other arguments, which "multichannel expand" to create multiple nodes).
-## \group || The target node relative to which new node(s) will be created. Similar to code::target:: in code::Synth(defName, args, target, addAction)::.
-## \out || Generally used for the output bus of a link::Classes/Synth::. When using link::Classes/Pbus:: or link::Classes/Pfxb::, an audio bus is allocated to isolate the pattern's signal. All events from the pattern receive the new bus number in the code::\out:: slot, and SynthDefs being played should use an code::out:: argument for the target of output UGens, e.g., code::Out.ar(out, ...):: .
+## keyword:: addAction
+addAction || How to add a synth or group node relative to the given code::\group:: in the event. See link::Classes/Synth::.
+## keyword:: amp
+amp || Not formally defined as a special parameter, but this is typically used for Synth amplitude. The SynthDef should have an code::amp:: argument and use it to control volume. code::\amp:: is optionally calculated from code::\db::.
+## keyword:: id
+id || The desired id(s) for newly created Nodes in this event. Normally this is code::nil::, in which case the IDs will be obtained from code::server.nextNodeID::.
+## keyword:: instrument
+instrument || The link::Classes/SynthDef:: name for which nodes will be created. Only one name should be given (unlike other arguments, which "multichannel expand" to create multiple nodes).
+## keyword:: group
+group || The target node relative to which new node(s) will be created. Similar to code::target:: in code::Synth(defName, args, target, addAction)::.
+## keyword:: out
+out || Generally used for the output bus of a link::Classes/Synth::. When using link::Classes/Pbus:: or link::Classes/Pfxb::, an audio bus is allocated to isolate the pattern's signal. All events from the pattern receive the new bus number in the code::\out:: slot, and SynthDefs being played should use an code::out:: argument for the target of output UGens, e.g., code::Out.ar(out, ...):: .
 ::
 
 subsection::User function hooks
 
 definitionList::
-## \finish || A function that will be executed after code::play:: has been called, but before event type processing. Use this to manipulate event data.
-## \callback || A function that will be executed after the Event has finished all its work. The code::callback:: may be used for bookkeeping. Finished Events are expected to store new node IDs under code::~id::; with the IDs, you can register functions to watch node status or set node controls, for instance. The function receives the finished event as its argument.
+## keyword:: finish
+finish || A function that will be executed after code::play:: has been called, but before event type processing. Use this to manipulate event data.
+## keyword:: callback
+callback || A function that will be executed after the Event has finished all its work. The code::callback:: may be used for bookkeeping. Finished Events are expected to store new node IDs under code::~id::; with the IDs, you can register functions to watch node status or set node controls, for instance. The function receives the finished event as its argument.
 ::
 
 section::Event Types
@@ -67,13 +81,17 @@ section::Event Types
 subsection::Node control
 
 definitionList::
-## rest || As one would expect, a code::\rest:: does nothing except wait the required amount of time until the next event.
+## keyword:: rest
+rest || As one would expect, a code::\rest:: does nothing except wait the required amount of time until the next event.
 
-## note || This is the default event type, used when code::\type:: is not specified. It plays one or more Synth nodes on the server, with an automatic release after code::\sustain:: beats if the SynthDef has a code::gate:: argument.
+## keyword:: note
+note || This is the default event type, used when code::\type:: is not specified. It plays one or more Synth nodes on the server, with an automatic release after code::\sustain:: beats if the SynthDef has a code::gate:: argument.
 definitionList::
 ## Standard Timing and Node control arguments ||
-## sendGate || Override SynthDef behavior for the code::gate:: argument. If the SynthDef as code::gate::, setting code::sendGate = false:: prevents the release message from being sent. Rarely used.
-## strum || If multiple notes are produced (usually a chord, given by providing an array to one of the pitch parameters), code::\strum:: is the number of beats to delay each successive note onset. When using code::\strum::, another key is active, code::\strumEndsTogether::. If false (the default), each strummed node will play for its full duration and the releases will be staggered. If true, the releases will occur at the same time.
+## keyword:: sendGate
+sendGate || Override SynthDef behavior for the code::gate:: argument. If the SynthDef as code::gate::, setting code::sendGate = false:: prevents the release message from being sent. Rarely used.
+## keyword:: strum
+strum || If multiple notes are produced (usually a chord, given by providing an array to one of the pitch parameters), code::\strum:: is the number of beats to delay each successive note onset. When using code::\strum::, another key is active, code::\strumEndsTogether::. If false (the default), each strummed node will play for its full duration and the releases will be staggered. If true, the releases will occur at the same time.
 
 code::
 p = Pbind(
@@ -90,30 +108,39 @@ p.stop;
 ::
 ::
 
-## on || Start a Synth node (or nodes) without releasing. The node ID(s) are in the event's code::~id:: variable. Those IDs can be used with the off, set and kill event types.
+## keyword:: on
+on || Start a Synth node (or nodes) without releasing. The node ID(s) are in the event's code::~id:: variable. Those IDs can be used with the off, set and kill event types.
 definitionList::
 ## Standard Timing and Node control arguments ||
 ## (sendGate and strum parameters are not used) ||
 ::
 
-## off || Release server nodes nicely if possible. If the SynthDef has a code::gate:: argument, the gate will be set to code::0:: or a user-specified value. Otherwise, the nodes are brutally killed with code::n_free::.
+## keyword:: off
+off || Release server nodes nicely if possible. If the SynthDef has a code::gate:: argument, the gate will be set to code::0:: or a user-specified value. Otherwise, the nodes are brutally killed with code::n_free::.
 definitionList::
 ## Standard Timing control arguments ||
-## hasGate || True or false, telling the event whether the SynthDef has a code::gate:: argument or not. The default is assumed true.
-## id || The node ID(s) must be given explicitly.
-## gate || By default, the gate will be set to code::0::. Negative values trigger a "forced release" in EnvGen. See the link::Classes/EnvGen:: help file for details.
+## keyword:: hasGate
+hasGate || True or false, telling the event whether the SynthDef has a code::gate:: argument or not. The default is assumed true.
+## keyword:: id
+id || The node ID(s) must be given explicitly.
+## keyword:: gate
+gate || By default, the gate will be set to code::0::. Negative values trigger a "forced release" in EnvGen. See the link::Classes/EnvGen:: help file for details.
 ::
 
-## kill || Immediately remove nodes using code::n_free::.
+## keyword:: kill
+kill || Immediately remove nodes using code::n_free::.
 definitionList::
 ## Standard Timing control arguments ||
-## id || The node ID(s) must be given explicitly.
+## keyword:: id
+id || The node ID(s) must be given explicitly.
 ::
 
-## set || Send new values to the control inputs of existing nodes.
+## keyword:: set
+set || Send new values to the control inputs of existing nodes.
 definitionList::
 ## Standard Timing control arguments ||
-## id || The node ID(s) must be given explicitly. This may be an integer ID or Synth/Group node object.
+## keyword:: id
+id || The node ID(s) must be given explicitly. This may be an integer ID or Synth/Group node object.
 ::
 ::
 
@@ -122,8 +149,10 @@ There are two ways to specify argument names: by emphasis::instrument:: and by e
 - emphasis::By instrument:: :
 
 definitionList::
-## instrument || The SynthDef name should be given again, so that the event knows which event values are relevant for the nodes.
-## args || By default, the code::\args:: key contains the control names for the default synthdef. To take argument names from the instrument name, you must override this default with an empty array (or any non-collection object).
+## keyword:: instrument
+instrument || The SynthDef name should be given again, so that the event knows which event values are relevant for the nodes.
+## keyword:: args
+args || By default, the code::\args:: key contains the control names for the default synthdef. To take argument names from the instrument name, you must override this default with an empty array (or any non-collection object).
 
 code::
 (
@@ -156,7 +185,8 @@ a.free;
 - emphasis::By argument names:: :
 
 definitionList::
-## args || Provide a list of the Synth argument names as an array here, e.g. code::[\freq, \amp, \pan]::. There is no need to provide the instrument name this way.
+## keyword:: args
+args || Provide a list of the Synth argument names as an array here, e.g. code::[\freq, \amp, \pan]::. There is no need to provide the instrument name this way.
 
 code::
 a = Synth(\event_set);
@@ -177,25 +207,32 @@ a.free;
 ::
 
 definitionList::
-## monoNote ||
-## monoOff ||
-## monoSet || These event types are used internally by Pmono and PmonoArtic. They should not be used directly.
+## keyword:: monoNote
+monoNote ||
+## keyword:: monoOff
+monoOff ||
+## keyword:: monoSet
+monoSet || These event types are used internally by Pmono and PmonoArtic. They should not be used directly.
 ::
 
 subsection::Server control
 
 definitionList::
-## group || Create a new group (or groups).
+## keyword:: group
+group || Create a new group (or groups).
 definitionList::
 ## Standard Timing and Node control arguments ||
 ## id  || (Optional) IDs for the new groups. If not specified, the new ID (for one group only) can be found in the event after code::.play::. To create multiple groups, you must provide an array of IDs.
 ::
 
-## bus || Set the value of a control bus, or contiguous control buses. This assumes that you already have the bus index.
+## keyword:: bus
+bus || Set the value of a control bus, or contiguous control buses. This assumes that you already have the bus index.
 definitionList::
 ## Standard Timing control arguments ||
-## array || The value(s) to send to the bus(es). If it's only one value, it doesn't have to be an array.
-## out || The first bus index to be set. A Bus object can be used.
+## keyword:: array
+array || The value(s) to send to the bus(es). If it's only one value, it doesn't have to be an array.
+## keyword:: out
+out || The first bus index to be set. A Bus object can be used.
 ::
 ::
 
@@ -204,45 +241,65 @@ subsection::Buffer control
 All of these buffer event types expect the buffer number to be provided. They will not automatically get a buffer number from the server's buffer allocator. A Buffer object is allowed -- you could create the Buffer first using code::Buffer.alloc:: or code::Buffer.new:: and then use this object in the control events. See also link::#Event types with cleanup:: below for other, user-friendlier Buffer control options.
 
 definitionList::
-## alloc || Allocate memory for a buffer on the server. Only one buffer may be allocated per event.
+## keyword:: alloc
+alloc || Allocate memory for a buffer on the server. Only one buffer may be allocated per event.
 definitionList::
 ## Standard Timing control arguments ||
 ## bufnum, numchannels, numframes || See the link::Classes/Buffer:: help file.
 ::
 
-## free || Deallocate the buffer's memory on the server.
+## keyword:: free
+free || Deallocate the buffer's memory on the server.
 definitionList::
 ## Standard Timing control arguments ||
-## bufnum || Buffer number to free (one only).
+## keyword:: bufnum
+bufnum || Buffer number to free (one only).
 ::
 
-## gen || Generate wavetable data in the buffer, using one of the server's code::b_gen:: plug-ins. The link::Classes/Buffer:: help file has more detail on the standard plug-ins.
+## keyword:: gen
+gen || Generate wavetable data in the buffer, using one of the server's code::b_gen:: plug-ins. The link::Classes/Buffer:: help file has more detail on the standard plug-ins.
 definitionList::
 ## Standard Timing control arguments ||
-## bufnum ||
-## gencmd || The generator plug-in name: code::\sine1::, code::\sine2::, code::\sine3::, code::\cheby::.
-## genflags || Three flags, associated with numbers: normalize = code::1::, asWavetable = code::2::, clearFirst = code::4::. Add the numbers for the desired flags. Normally the flags are all true, adding up to code::7::.
-## genarray || Data parameters for the plug-in. See the link::Reference/Server-Command-Reference:: help file for details on the format for each plug-in.
+## keyword:: bufnum
+bufnum ||
+## keyword:: gencmd
+gencmd || The generator plug-in name: code::\sine1::, code::\sine2::, code::\sine3::, code::\cheby::.
+## keyword:: genflags
+genflags || Three flags, associated with numbers: normalize = code::1::, asWavetable = code::2::, clearFirst = code::4::. Add the numbers for the desired flags. Normally the flags are all true, adding up to code::7::.
+## keyword:: genarray
+genarray || Data parameters for the plug-in. See the link::Reference/Server-Command-Reference:: help file for details on the format for each plug-in.
 ::
 
-## load || Allocate buffer memory in the server and load a sound file into it, using code::b_allocRead::.
+## keyword:: load
+load || Allocate buffer memory in the server and load a sound file into it, using code::b_allocRead::.
 definitionList::
 ## Standard Timing control arguments ||
-## bufnum ||
-## filename || Path to disk file.
-## frame || Starting frame to read (default code::0::).
-## numframes || Number of frames to read (default code::0::, which loads the entire file).
+## keyword:: bufnum
+bufnum ||
+## keyword:: filename
+filename || Path to disk file.
+## keyword:: frame
+frame || Starting frame to read (default code::0::).
+## keyword:: numframes
+numframes || Number of frames to read (default code::0::, which loads the entire file).
 ::
 
-## read || Read a sound file into a buffer already allocated on the server. This event type is good to cue a sound file for use with DiskIn.
+## keyword:: read
+read || Read a sound file into a buffer already allocated on the server. This event type is good to cue a sound file for use with DiskIn.
 definitionList::
 ## Standard Timing control arguments ||
-## bufnum ||
-## filename || Path to disk file.
-## frame || Starting soundfile frame to read (default code::0::).
-## numframes || Number of frames to read (default code::0::, which loads the entire file).
-## bufpos || Starting buffer frame (default code::0::).
-## leaveOpen || code::1:: = leave the file open (for link::Classes/DiskIn:: use). code::0:: = close the disk file after reading. Default = code::0::.
+## keyword:: bufnum
+bufnum ||
+## keyword:: filename
+filename || Path to disk file.
+## keyword:: frame
+frame || Starting soundfile frame to read (default code::0::).
+## keyword:: numframes
+numframes || Number of frames to read (default code::0::, which loads the entire file).
+## keyword:: bufpos
+bufpos || Starting buffer frame (default code::0::).
+## keyword:: leaveOpen
+leaveOpen || code::1:: = leave the file open (for link::Classes/DiskIn:: use). code::0:: = close the disk file after reading. Default = code::0::.
 ::
 ::
 
@@ -263,88 +320,132 @@ EventTypesWithCleanup.cleanup(b);
 See the Pproto example in link::Tutorials/A-Practical-Guide/PG_06f_Server_Control::, showing how these can be used to clean up server objects at the end of a pattern.
 
 definitionList::
-## audioBus || Allocate an audio bus index from the server.
+## keyword:: audioBus
+audioBus || Allocate an audio bus index from the server.
 definitionList::
-## channels || Number of channels to allocate.
+## keyword:: channels
+channels || Number of channels to allocate.
 ::
 
-## controlBus || Allocate a control bus index from the server.
+## keyword:: controlBus
+controlBus || Allocate a control bus index from the server.
 definitionList::
-## channels || Number of channels to allocate.
+## keyword:: channels
+channels || Number of channels to allocate.
 ::
 
-## buffer || Allocate a buffer number if not specified, and reserve the memory on the server.
+## keyword:: buffer
+buffer || Allocate a buffer number if not specified, and reserve the memory on the server.
 definitionList::
-## bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
-## numBufs || Number of contiguous buffer numbers to reserve (default = code::1::).
-## numFrames || Number of frames.
-## numChannels || Number of channels.
+## keyword:: bufNum
+bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
+## keyword:: numBufs
+numBufs || Number of contiguous buffer numbers to reserve (default = code::1::).
+## keyword:: numFrames
+numFrames || Number of frames.
+## keyword:: numChannels
+numChannels || Number of channels.
 ::
 
-## allocRead || Read a disk file into server memory. The file is closed when finished.
+## keyword:: allocRead
+allocRead || Read a disk file into server memory. The file is closed when finished.
 definitionList::
-## bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
-## path || Path to the sound file on disk.
-## firstFileFrame || Where to start reading in the file.
-## numFrames || Number of frames. If not given, the whole file is read.
+## keyword:: bufNum
+bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
+## keyword:: path
+path || Path to the sound file on disk.
+## keyword:: firstFileFrame
+firstFileFrame || Where to start reading in the file.
+## keyword:: numFrames
+numFrames || Number of frames. If not given, the whole file is read.
 ::
 
-## cue || Cue a sound file (generally for use with DiskIn).
+## keyword:: cue
+cue || Cue a sound file (generally for use with DiskIn).
 definitionList::
-## bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
-## path || Path to the sound file on disk.
-## firstFileFrame || Where to start reading in the file.
-## numFrames || Number of frames. If not given, the whole file is read.
-## firstBufferFrame || Where in the buffer to start putting file data.
-## leaveOpen || code::1:: = leave the file open (for link::Classes/DiskIn:: use). code::0:: = close the disk file after reading. Default = code::0::.
+## keyword:: bufNum
+bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
+## keyword:: path
+path || Path to the sound file on disk.
+## keyword:: firstFileFrame
+firstFileFrame || Where to start reading in the file.
+## keyword:: numFrames
+numFrames || Number of frames. If not given, the whole file is read.
+## keyword:: firstBufferFrame
+firstBufferFrame || Where in the buffer to start putting file data.
+## keyword:: leaveOpen
+leaveOpen || code::1:: = leave the file open (for link::Classes/DiskIn:: use). code::0:: = close the disk file after reading. Default = code::0::.
 ::
 
-## table || Fill a buffer with preset data. This uses code::/b_setn:: to transfer the data, so all of the data must fit into one datagram. It may take some experimentation to find the upper limit.
+## keyword:: table
+table || Fill a buffer with preset data. This uses code::/b_setn:: to transfer the data, so all of the data must fit into one datagram. It may take some experimentation to find the upper limit.
 definitionList::
-## bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
-## amps || The values to put into the buffer. These should all be Floats.
+## keyword:: bufNum
+bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
+## keyword:: amps
+amps || The values to put into the buffer. These should all be Floats.
 ::
 
-## cheby || Generate a Chebyshev transfer function for waveshaping.
+## keyword:: cheby
+cheby || Generate a Chebyshev transfer function for waveshaping.
 definitionList::
-## bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
-## numFrames || Number of frames, should be a power of 2.
-## numChannels || Number of channels.
-## genflags || Three flags, associated with numbers: normalize = code::1::, asWavetable = code::2::, clearFirst = code::4::. Add the numbers for the desired flags. Normally the flags are all true, adding up to code::7::.
-## amps || The amplitude of each partial (i.e., polynomial coefficient).
+## keyword:: bufNum
+bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
+## keyword:: numFrames
+numFrames || Number of frames, should be a power of 2.
+## keyword:: numChannels
+numChannels || Number of channels.
+## keyword:: genflags
+genflags || Three flags, associated with numbers: normalize = code::1::, asWavetable = code::2::, clearFirst = code::4::. Add the numbers for the desired flags. Normally the flags are all true, adding up to code::7::.
+## keyword:: amps
+amps || The amplitude of each partial (i.e., polynomial coefficient).
 ::
 
-## sine1 || Mirrors the code::sine1:: method for link::Classes/Buffer::, generating a wavetable with an integer-multiple harmonic spectrum using the given partial amplitudes.
+## keyword:: sine1
+sine1 || Mirrors the code::sine1:: method for link::Classes/Buffer::, generating a wavetable with an integer-multiple harmonic spectrum using the given partial amplitudes.
 definitionList::
-## bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
-## numFrames || Number of frames, should be a power of 2.
-## numChannels || Number of channels.
-## genflags || See above.
-## amps || Array of amplitudes for each partial.
+## keyword:: bufNum
+bufNum || (Optional) Buffer number. If not given, a free number will be obtained from the server.
+## keyword:: numFrames
+numFrames || Number of frames, should be a power of 2.
+## keyword:: numChannels
+numChannels || Number of channels.
+## keyword:: genflags
+genflags || See above.
+## keyword:: amps
+amps || Array of amplitudes for each partial.
 ::
 
-## sine2 || Like strong::sine1::, but the frequency ratio of each partial is also given.
+## keyword:: sine2
+sine2 || Like strong::sine1::, but the frequency ratio of each partial is also given.
 definitionList::
 ## Same arguments as sine1, plus: ||
-## freqs || Array of frequencies for each partial. code::1.0:: is the fundamental frequency; its sine wave occupies the entire buffer duration.
+## keyword:: freqs
+freqs || Array of frequencies for each partial. code::1.0:: is the fundamental frequency; its sine wave occupies the entire buffer duration.
 ::
 
-## sine3 || Like strong::sine2::, but the phase of each partial may also be provided.
+## keyword:: sine3
+sine3 || Like strong::sine2::, but the phase of each partial may also be provided.
 definitionList::
 ## Same arguments as sine1, plus: ||
-## phases || Array of phases for each partial, given in radians (0.0 - 2pi).
+## keyword:: phases
+phases || Array of phases for each partial, given in radians (0.0 - 2pi).
 ::
 ::
 
 subsection::MIDI output
 
 definitionList::
-## midi || Sends one of several types of MIDI messages to a MIDIOut object.
+## keyword:: midi
+midi || Sends one of several types of MIDI messages to a MIDIOut object.
 definitionList::
 ## Standard Timing control arguments (except timingOffset, which is not used) ||
-## midicmd || The type of MIDI message to send. This also determines other arguments that should be present in the event.
-## midiout || The MIDI out object, which connects to one of the MIDI devices listed in code::MIDIClient.destinations::.
-## chan || The MIDI channel number (0-15) on the device that should receive the message. This applies to all midicmds except the global ones ( strong::smpte::, strong::songPtr::, strong::sysex:: ).
+## keyword:: midicmd
+midicmd || The type of MIDI message to send. This also determines other arguments that should be present in the event.
+## keyword:: midiout
+midiout || The MIDI out object, which connects to one of the MIDI devices listed in code::MIDIClient.destinations::.
+## keyword:: chan
+chan || The MIDI channel number (0-15) on the device that should receive the message. This applies to all midicmds except the global ones ( strong::smpte::, strong::songPtr::, strong::sysex:: ).
 ::
 ::
 
@@ -352,72 +453,107 @@ definitionList::
 ## Available midicmds: ||
 
 definitionList::
-## noteOn || Starts a note, and optionally stops it. If multiple frequencies are given, one noteOn/noteOff pair is sent for each, and code::\strum:: is also supported.
+## keyword:: noteOn
+noteOn || Starts a note, and optionally stops it. If multiple frequencies are given, one noteOn/noteOff pair is sent for each, and code::\strum:: is also supported.
 definitionList::
-## chan || MIDI channel (0-15).
-## midinote || Note number to trigger. This may be calculated from the standard pitch hierarchy described in link::Tutorials/A-Practical-Guide/PG_07_Value_Conversions:: (with the exception that only 12TET can be supported).
-## amp || code::MIDI velocity = amp * 127::.
-## sustain || How many beats to wait before sending the corresponding note off message. If not given directly, it's calculated as code::~sustain = ~dur * ~legato * ~stretch:: (just like the standard code::\note:: event type).
-## hasGate || Normally true. If false, the note off message will not be sent.
+## keyword:: chan
+chan || MIDI channel (0-15).
+## keyword:: midinote
+midinote || Note number to trigger. This may be calculated from the standard pitch hierarchy described in link::Tutorials/A-Practical-Guide/PG_07_Value_Conversions:: (with the exception that only 12TET can be supported).
+## keyword:: amp
+amp || code::MIDI velocity = amp * 127::.
+## keyword:: sustain
+sustain || How many beats to wait before sending the corresponding note off message. If not given directly, it's calculated as code::~sustain = ~dur * ~legato * ~stretch:: (just like the standard code::\note:: event type).
+## keyword:: hasGate
+hasGate || Normally true. If false, the note off message will not be sent.
 ::
 
-## noteOff || Send an explicit note off message (useful if strong::hasGate:: is set false in the note on event).
+## keyword:: noteOff
+noteOff || Send an explicit note off message (useful if strong::hasGate:: is set false in the note on event).
 definitionList::
-## chan || MIDI channel (0-15).
-## midinote || Note number.
-## amp || Release velocity (supported by some synthesizers).
+## keyword:: chan
+chan || MIDI channel (0-15).
+## keyword:: midinote
+midinote || Note number.
+## keyword:: amp
+amp || Release velocity (supported by some synthesizers).
 ::
 
-## allNotesOff || "Panic" message, kills all notes on the channel.
+## keyword:: allNotesOff
+allNotesOff || "Panic" message, kills all notes on the channel.
 definitionList::
-## chan || MIDI channel (0-15).
+## keyword:: chan
+chan || MIDI channel (0-15).
 ::
 
-## control || Continuous controller message.
+## keyword:: control
+control || Continuous controller message.
 definitionList::
-## chan || MIDI channel (0-15).
-## ctlNum || Controller number to receive the new value.
-## control || New value (0-127).
+## keyword:: chan
+chan || MIDI channel (0-15).
+## keyword:: ctlNum
+ctlNum || Controller number to receive the new value.
+## keyword:: control
+control || New value (0-127).
 ::
 
-## bend || Pitch bend message.
+## keyword:: bend
+bend || Pitch bend message.
 definitionList::
-## chan || MIDI channel (0-15).
-## val || New value (0-16383). 8191 is centered.
+## keyword:: chan
+chan || MIDI channel (0-15).
+## keyword:: val
+val || New value (0-16383). 8191 is centered.
 ::
 
-## touch || Aftertouch message.
+## keyword:: touch
+touch || Aftertouch message.
 definitionList::
-## chan || MIDI channel (0-15).
-## val || New value (0-127).
+## keyword:: chan
+chan || MIDI channel (0-15).
+## keyword:: val
+val || New value (0-127).
 ::
 
-## polyTouch || Poly aftertouch message (not supported by all synthesizers).
+## keyword:: polyTouch
+polyTouch || Poly aftertouch message (not supported by all synthesizers).
 definitionList::
-## chan || MIDI channel (0-15).
-## midinote || Note number to get the new after touch value. As in note on, it may be calculated from the standard pitch hierarchy.
-## polyTouch || New value (0-127).
+## keyword:: chan
+chan || MIDI channel (0-15).
+## keyword:: midinote
+midinote || Note number to get the new after touch value. As in note on, it may be calculated from the standard pitch hierarchy.
+## keyword:: polyTouch
+polyTouch || New value (0-127).
 ::
 
-## program || Program change message.
+## keyword:: program
+program || Program change message.
 definitionList::
-## chan || MIDI channel (0-15).
-## progNum || Program number (0-127).
+## keyword:: chan
+chan || MIDI channel (0-15).
+## keyword:: progNum
+progNum || Program number (0-127).
 ::
 
-## smpte || Send MIDI Time Code messages.
+## keyword:: smpte
+smpte || Send MIDI Time Code messages.
 definitionList::
-## Arguments || frames, seconds, minutes, hours, frameRate
+## keyword:: Arguments
+Arguments || frames, seconds, minutes, hours, frameRate
 ::
 
-## songPtr || Song pointer message.
+## keyword:: songPtr
+songPtr || Song pointer message.
 definitionList::
-## songPtr || Pointer value (0-16383).
+## keyword:: songPtr
+songPtr || Pointer value (0-16383).
 ::
 
-## sysex || System exclusive messages.
+## keyword:: sysex
+sysex || System exclusive messages.
 definitionList::
-## array || An link::Classes/Int8Array:: with the sysex bytes in order.
+## keyword:: array
+array || An link::Classes/Int8Array:: with the sysex bytes in order.
 note::
 Very important: Arrays normally multi-channel expand in patterns. So, you must wrap the Int8Array inside another array to prevent this. Write code::[Int8Array[...]]::, not just code::Int8Array[...]::.
 ::
@@ -428,10 +564,12 @@ Very important: Arrays normally multi-channel expand in patterns. So, you must w
 subsection::Miscellaneous
 
 definitionList::
-## composite || Perform any number of event types, given as ~types. You should ensure that parameters are compatible. It is possible, using code::\composite::, to play a synth and send MIDI for the same pitches. It is not possible to use one frequency for the synth and a different one for MIDI, in the same event (you would need two different events for that case).
+## keyword:: composite
+composite || Perform any number of event types, given as ~types. You should ensure that parameters are compatible. It is possible, using code::\composite::, to play a synth and send MIDI for the same pitches. It is not possible to use one frequency for the synth and a different one for MIDI, in the same event (you would need two different events for that case).
 
 definitionList::
-## types || An array of Symbols, listing the Event types to be performed.
+## keyword:: types
+types || An array of Symbols, listing the Event types to be performed.
 ::
 
 code::
@@ -442,12 +580,16 @@ m = MIDIOut(0);
 (type: \composite, types: [\note, \midi], midiout: m, degree: 0, dur: 3).play;
 ::
 
-## phrase || See link::Tutorials/JITLib/recursive_phrasing::.
+## keyword:: phrase
+phrase || See link::Tutorials/JITLib/recursive_phrasing::.
 
-## setProperties || Set variables belonging to a given object. One possible use is to control a GUI using a pattern.
+## keyword:: setProperties
+setProperties || Set variables belonging to a given object. One possible use is to control a GUI using a pattern.
 definitionList::
-## receiver || The object to be modified.
-## args || The list of variable names to set in the receiver. The receiver should have a setter method -- variableName_ -- for each of these. New values will be looked up in the event.
+## keyword:: receiver
+receiver || The object to be modified.
+## keyword:: args
+args || The list of variable names to set in the receiver. The receiver should have a setter method -- variableName_ -- for each of these. New values will be looked up in the event.
 ::
 
 code::
